@@ -1,4 +1,5 @@
 #!/bin/bash +xe
+
 REPO_NAME=`pushd ${WORKSPACE}/build >/dev/null && git remote show origin -n | grep "Fetch URL:" | sed "s#^.*/\(.*\).git#\1#" && popd > /dev/null`
 if [ -e "${REPO_NAME}/sonar.properties.in" ]; then
   echo "Generating sonar.properties file from template"
