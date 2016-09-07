@@ -116,10 +116,10 @@ vagrantHalt() {
 
 BASE_REPO_URL="${BASE_REPO_URL}"
 runTests() {
-  cp -f ${WORKSPACE}/build-config/config.ini ${WORKSPACE}/RackHD/test/config
-  cd ${WORKSPACE}/RackHD/test
-  RACKHD_BASE_REPO_URL=${BASE_REPO_URL} RACKHD_TEST_LOGLVL=INFO \
-      python run.py --group=${TEST_GROUP} --with-xunit 
+  #cp -f ${WORKSPACE}/build-config/config.ini ${WORKSPACE}/RackHD/test/config
+  cd ${WORKSPACE}/FIT/test/fit_tests
+  python run_tests.py -stack vagrant -p 9090 -v 2 -xunit -test deploy/rackhd_stack_init.py
+  python run_tests.py -stack vagrant -p 9090 -v 2 -xunit -test tests/ -group smoke
   mkdir -p ${WORKSPACE}/xunit-reports
   cp *.xml ${WORKSPACE}/xunit-reports
 }
@@ -147,12 +147,12 @@ prepareDeps
 
 # Power off nodes and shutdown vagrant box
 vagrantDestroy
-nodesOff
+#nodesOff
 
 # Power on vagrant box and nodes 
 vagrantUp
 waitForAPI
-nodesOn
+#nodesOn
 
 # Run tests
 runTests

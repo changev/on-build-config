@@ -25,7 +25,7 @@
             "port": 8443,
             "httpsEnabled": true,
             "proxiesEnabled": true,
-            "authEnabled": true,
+            "authEnabled": false,
             "routers": "northbound-api-router"
         },
         {
