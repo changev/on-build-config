@@ -4,7 +4,7 @@ REPOS=("on-http" "on-taskgraph" "on-dhcp-proxy" "on-tftp" "on-syslog")
 
 VCOMPUTE="${VCOMPUTE}"
 if [ -z "${VCOMPUTE}" ]; then
-  VCOMPUTE=("jvm-Quanta_T41-1" "jvm-vRinjin-1" "jvm-vRinjin-2")
+  VCOMPUTE=("quanta_t41")
 fi
 
 TEST_GROUP="${TEST_GROUP}"
