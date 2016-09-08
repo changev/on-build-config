@@ -66,7 +66,13 @@ prepareDeps() {
          git clone https://github.com/RackHD/${i}.git
          cd ${i}
          git checkout ${GIT_REFSPEC}
-         npm install --production
+	 if [ "${i}" == "on-http" ]; then
+          npm install
+          npm run apidoc
+          npm run taskdoc
+	 else
+          npm install --production
+         fi
      fi
   done
   dlTftpFiles
