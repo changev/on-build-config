@@ -124,8 +124,8 @@ BASE_REPO_URL="${BASE_REPO_URL}"
 runTests() {
   #cp -f ${WORKSPACE}/build-config/config.ini ${WORKSPACE}/RackHD/test/config
   cd ${WORKSPACE}/FIT/test/fit_tests
-  python run_tests.py -stack vagrant -p 9090 -v 4 -xunit  -test deploy/rackhd_stack_init.py
-  python run_tests.py -stack vagrant -p 9090 -v 4 -xunit  -test tests/ -group smoke
+  python run_tests.py -stack vagrant -p 9090 -v 9  -test deploy/rackhd_stack_init.py
+  python run_tests.py -stack vagrant -p 9090 -v 9  -test tests/ -group smoke
   mkdir -p ${WORKSPACE}/xunit-reports
   cp *.xml ${WORKSPACE}/xunit-reports
 }
