@@ -22,6 +22,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         # target.vm.network :public_network
         if ENV['WORKSPACE']
           target.vm.synced_folder "#{ENV['WORKSPACE']}/build-deps", "/home/vagrant/src/"
+          target.vm.synced_folder "#{ENV['WORKSPACE']}/build-config", "/home/vagrant/src/build-config/"
           if ENV['REPO_NAME']
             target.vm.synced_folder "#{ENV['WORKSPACE']}/build", "/home/vagrant/src/#{ENV['REPO_NAME']}"
           end
@@ -62,8 +63,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             echo "Try again to clean mongodb"
           done
           nf start > /home/vagrant/src/"#{ENV['REPO_NAME']}"/vagrant.log &
+          ipmitool -I lanplus -H 172.31.128.3 -U admin -P admin sol deactivate |\
+          tr 'A-Z' 'a-z' |\
+          while IFS= read -r line; do echo "$(date) $line"; done > sol.log
         SHELL
-
-
     end
 end
