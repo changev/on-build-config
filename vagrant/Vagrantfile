@@ -57,6 +57,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           service isc-dhcp-server start
           service rsyslog stop
           echo manual | sudo tee /etc/init/rsyslog.override
+          until echo "db.dropDatabase()" | mongo pxe
+          do
+            sleep 5
+            echo "Try again to clean mongodb"
+          done
           nf start > /home/vagrant/src/"#{ENV['REPO_NAME']}"/vagrant.log &
         SHELL
 
