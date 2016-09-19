@@ -7,10 +7,9 @@
 #build-config will generate this list through env vars
 bmc_account_list="${BMC_ACCOUNT_LIST}"
 
-#generate sol log for all nodes
-#raw logs saved in /home/vagrant/src/, which is the $WORKSPACE/build-deps of host.
-#in post-deploy raw logs are convert into html by ansi2html tool
-#cause don't know nodes' number and when the node get IP by DHCP, so retry all IP every 5s
+#Generate sol log for all nodes.
+#Use cmd 'arp' to get vnodes' IP and cause don't know nodes' number and when the node get IP by DHCP, 
+#so retry several time ensure all nodes have got IP.
 handled_ip_list=""
 vnode_num=0
 timeout=0
