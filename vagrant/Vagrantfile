@@ -63,9 +63,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             echo "Try again to clean mongodb"
           done
           nf start > /home/vagrant/src/"#{ENV['REPO_NAME']}"/vagrant.log &
-          ipmitool -I lanplus -H 172.31.128.3 -U admin -P admin sol deactivate |\
-          tr 'A-Z' 'a-z' |\
-          while IFS= read -r line; do echo "$(date) $line"; done > sol.log
         SHELL
     end
 end
