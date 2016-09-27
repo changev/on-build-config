@@ -158,12 +158,12 @@ prepareDeps
 
 # Power off nodes and shutdown vagrant box
 vagrantDestroy
-nodesOff
+#nodesOff
 
 # Power on vagrant box and nodes 
 vagrantUp
 waitForAPI
-nodesOn
+#nodesOn
 generateSolLog
 # Run tests
 runTests
