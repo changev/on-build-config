@@ -74,6 +74,9 @@ doBuild() {
             echo "Building rackhd/$repo$TAG"
             repos_tags=$repos_tags$repo$TAG" "
             cp Dockerfile ../Dockerfile.bak
+            if [ "$repo" == "on-taskgraph" ]; then
+                    sed -i "s/ apt-get update/ ls/g" Dockerfile
+            fi
             if [ "$repo" == "on-imagebuilder" ]; then
                     docker build -t rackhd/files$TAG .
                     repos_tags=files$TAG" "
