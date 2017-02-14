@@ -270,7 +270,7 @@ class PrParser(object):
                     #so in their unit-test both the two commits should be provided, so extra information of on-tasks 
                     #will be passed to on-core 
                     if properties_dic.has_key('ON_TASKS'):
-                        properties_dic['ADD_FORKURL'] = 'https://github.com/changev/on-tasks.git'
+                        properties_dic['ADD_FORKURL'] = 'https://github.com/RackHD/on-tasks.git'
                         properties_dic['ADD_COMMIT'] = '{0}'.format(properties_dic["ON_TASKS_ghprbActualCommit"])
 
         for k,v in properties_dic.iteritems():
