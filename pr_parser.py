@@ -17,85 +17,20 @@ from manifest import Manifest
 
 class PrParser(object):
 
-    def __init__(self):
+    def __init__(self, change_url, target_branch):
         """
-        __repo - RackHD/on-xxxx, The repo name of which repo triggers the build 
-        __target_branch - master etc., The target branch associated with pr
-        __merge_commit_sha - origin/pr/1/merge, The merge_commit_sha associated with the pr
-        __pull_id - number in string, the pull id associated with the pr
-        __actual_commit - sha1 code, the actual commit code associated with the pr
+        Initialize PrParser with change_url and target_branch
         """
-        self.__repo = None
-        self.__target_branch = None
-        self.__merge_commit_sha = None
-        self.__pull_id = None
-        self.__actual_commit = None
-        self.__pr_list = []
+        assert change_url, "Error: PR URL is None!"
+        assert target_branch, "Error: Target Branch is None!"
+        url_segments = change_url.split("/")
+        self.__repo = "/".join(change_url.split("/")[-4:-2]).lower()
+        self.__target_branch = target_branch
+        self.__pull_id = url_segments[-1]
+        self.__merge_commit_sha = "origin/pr/{0}/merge".format(self.__pull_id)
+        self.__pr_list = [self.__repo]
         self.__pr_connectivity_map = collections.defaultdict(dict)
 
-    def parse_args(self, args):
-        """
-        Take in values from the user.
-        Repo, branch, merge_commit_sha and pull_id are required. This exits if they are not given.
-        :return: Parsed args for assignment
-        """
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--repo",
-                            help="Git repo of the triggered pr",
-                            action="store")
-        parser.add_argument("--target_branch",
-                            help="The target branch of the pr for the named repo",
-                            action="store")
-        parser.add_argument("--actual_commit",
-                            help="The actual commit of the pr for the named repo",
-                            action="store")
-        parser.add_argument("--merge_commit_sha",
-                            help="The merge_commit_sha of target the pr",
-                            action="store")
-        parser.add_argument("--pull_id",
-                            help="The pull id of target the pr",
-                            action="store")
-        parsed_args = parser.parse_args(args)
-        return parsed_args
-
-    def assign_args(self, args):
-        """
-        Assign args to member variables.
-        :param args: Parsed args from the user
-        :return:
-        """
-        if args.repo:
-            self.__repo = args.repo.lower()
-            self.__pr_list.append(self.__repo)
-        else:
-            print "\nMust specify repository url\n"
-            sys.exit(1)
-        
-        if args.target_branch:
-            self.__target_branch = args.target_branch
-        else:
-            print "\nMust specify a branch name\n"
-            sys.exit(1)
-        
-        if args.actual_commit:
-            self.__actual_commit = args.actual_commit
-        else:
-            print "\nMust specify an actual_commit\n"
-            sys.exit(1)
-
-        if args.merge_commit_sha:
-            self.__merge_commit_sha = args.merge_commit_sha
-        else:
-            print "\nMust specify a commit-id\n"
-            sys.exit(1)
-
-        if args.pull_id:
-            self.__pull_id = args.pull_id
-        else:
-            print "\nMust specify a pull-id\n"
-            sys.exit(1)
-        
-        
     def parse_pr(self, base_repo, base_pull_id):
         """
         get related prs according to the base pr
@@ -176,11 +111,10 @@ class PrParser(object):
                         print "ERROR: the pr of {0} is unmergeable.\n{1}".format(dep_pr_url, pr.mergeable_state)
                         sys.exit(1)
                     sha = 'origin/pr/{0}/merge'.format(pull_id)
-                    actual_commit = gh.get_repo(repo).get_pull(long(pull_id)).get_commits().reversed[0].sha
                 except Exception as error:
                     print "ERROR: the pr of {0} doesn't exist.\n{1}".format(dep_pr_url, error)
-                print "INFO: find one dependency pr, ({0}, {1}, {2}, {3})".format(repo, sha, pull_id, actual_commit)
-                related_prs.append((repo, sha, pull_id, actual_commit))
+                print "INFO: find one dependency pr, ({0}, {1}, {2})".format(repo, sha, pull_id)
+                related_prs.append((repo, sha, pull_id))
                 self.__pr_connectivity_map[base_repo][repo] = True
                 if not self.__pr_connectivity_map[repo].has_key(base_repo):
                     self.__pr_connectivity_map[repo][base_repo] = False
@@ -191,20 +125,19 @@ class PrParser(object):
         return related_prs
 
 
-    def get_all_related_prs(self, repo, sha, pull_id, actual_commit):
+    def get_all_related_prs(self, repo, sha, pull_id):
         """
         RECURSIVELY get ALL related prs information according to the base pr
         :param repo: string, repo name associated with the pr to be parsed
         :param sha: string, the merge_commit_sha associated with the pr to be parsed
         :param pull_id: number in string, pull request id of the pr to be parsed
-        :param actual_commit: sha1 code, the actual commit code associated with the pr
-        :return all_prs: list of tuple of string: [(repo, sha, pull_id, actual_commit),...] 
+        :return all_prs: list of tuple of string: [(repo, sha, pull_id),...] 
         which is the associated with base pr
         """
 
         #add base pr first
         all_prs = []
-        base_pr = [(repo, sha, pull_id, actual_commit)]
+        base_pr = [(repo, sha, pull_id)]
         all_prs.extend(base_pr)
 
         #recursively find dependent pr
@@ -235,7 +168,7 @@ class PrParser(object):
     def generate_build_properties(self, all_prs, target_branch):
         """
         generate the content of the build properties file
-        :param all_prs: list of tuple of string: [(repo, sha, pull_id, actual_commit),...]
+        :param all_prs: list of tuple of string: [(repo, sha, pull_id),...]
         :param target_branch: string, The target branch associated with pr
         :return properties: string, the contents of build properties file
         """
@@ -252,7 +185,7 @@ class PrParser(object):
             properties_dic['REPO_NAME'] = ""
             #generate all contents first without distinguish prs
             for pr in all_prs:
-                repo, sha, pull_id, actual_commit = pr
+                repo, sha, pull_id = pr
                 repo_name = repo.split('/')[1]
                 if repo_name not in properties_dic['REPO_NAME']:
                     properties_dic['REPO_NAME'] += "{0} ".format(repo_name)
@@ -260,7 +193,6 @@ class PrParser(object):
                 properties_dic[repo_name] = "true"
                 properties_dic["{0}_ghprbGhRepository".format(repo_name)] = repo
                 properties_dic["{0}_sha1".format(repo_name)] = sha
-                properties_dic["{0}_ghprbActualCommit".format(repo_name)] = actual_commit
                 properties_dic["{0}_ghprbPullId".format(repo_name)] = pull_id
 
             #if on-tasks exists, on-http and on-taskgraph unit-test 
@@ -294,7 +226,7 @@ class PrParser(object):
         """
         write build properties file, this likes a main function
         """
-        all_prs = self.get_all_related_prs(self.__repo, self.__merge_commit_sha, self.__pull_id, self.__actual_commit)
+        all_prs = self.get_all_related_prs(self.__repo, self.__merge_commit_sha, self.__pull_id)
         properties = self.generate_build_properties(all_prs, self.__target_branch)
 
         #Jenkins:ingore in root pr -> get_all_related_prs return [] -> no trigger downstream and set commit status "pending"
@@ -357,7 +289,7 @@ class PrParser(object):
         """
         Generated manifest file
         """
-        all_prs = self.get_all_related_prs(self.__repo, self.__merge_commit_sha, self.__pull_id, self.__actual_commit)
+        all_prs = self.get_all_related_prs(self.__repo, self.__merge_commit_sha, self.__pull_id)
         under_test_prs = self.get_under_test_prs()
         # instance of manifest template
         manifest = Manifest.instance_of_sample()
@@ -376,6 +308,23 @@ class PrParser(object):
 
         manifest.validate_manifest()
         manifest.dump_to_json_file(file_path)
+
+def parse_args(self, args):
+    """
+    Take in values from the user.
+    Repo, branch, merge_commit_sha and pull_id are required. This exits if they are not given.
+    :return: Parsed args for assignment
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--change-url",
+                        help="Url of the triggered pr",
+                        action="store")
+    parser.add_argument("--target_branch",
+                        help="The target branch of the pr for the named repo",
+                        action="store")
+
+    parsed_args = parser.parse_args(args)
+    return parsed_args
 
 def main():
     pr_parser = PrParser()
