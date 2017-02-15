@@ -10,8 +10,10 @@ import argparse
 import sys
 import os
 import github
+import collections
 
 from github import Github
+from manifest import Manifest
 
 class PrParser(object):
 
@@ -28,6 +30,8 @@ class PrParser(object):
         self.__merge_commit_sha = None
         self.__pull_id = None
         self.__actual_commit = None
+        self.__pr_list = []
+        self.__pr_connectivity_map = collections.defaultdict(dict)
 
     def parse_args(self, args):
         """
@@ -62,6 +66,7 @@ class PrParser(object):
         """
         if args.repo:
             self.__repo = args.repo.lower()
+            self.__pr_list.append(self.__repo)
         else:
             print "\nMust specify repository url\n"
             sys.exit(1)
@@ -101,7 +106,7 @@ class PrParser(object):
         """
 
         #init github  and get related pr object
-        HOME = os.environ['HOME']
+        HOME = os.environ['HOME'] or "/home/jenkins"
         with open('{0}/.ghtoken'.format(HOME), 'r') as file:
             TOKEN = file.read().strip('\n')
         gh = Github(TOKEN)
@@ -176,6 +181,11 @@ class PrParser(object):
                     print "ERROR: the pr of {0} doesn't exist.\n{1}".format(dep_pr_url, error)
                 print "INFO: find one dependency pr, ({0}, {1}, {2}, {3})".format(repo, sha, pull_id, actual_commit)
                 related_prs.append((repo, sha, pull_id, actual_commit))
+                self.__pr_connectivity_map[base_repo][repo] = True
+                if not self.__pr_connectivity_map[repo].has_key(base_repo):
+                    self.__pr_connectivity_map[repo][base_repo] = False
+                if repo not in self.__pr_list:
+                    self.__pr_list.append(repo)
         
         print "INFO: repo: {0}, pull_id: {1} parsing done, recursive parse may continue".format(base_repo, base_pull_id)
         return related_prs
@@ -304,13 +314,74 @@ class PrParser(object):
             sys.exit(1)
         print "INFO: build properties file **{0}** has been created".format(file_name)
         return
-        
+
+    def get_under_test_prs(self):
+        """
+        According to the self.__pr_connectivity_map and self.__pr_list
+        to find those under_test_prs.
+        under_test_pr: 
+            1. root pr(which trigger this build) is under_test
+            2. pr that diconnected with under_test_pr is under_test_pr
+        """
+        # the final filtered results
+        # under_test_prs to be parsed to find related under_test_prs
+        tmp_under_test_prs = [self.__pr_list[0]]
+        # wich is the under_test_prs after parsing
+        under_test_prs = [self.__pr_list[0]]
+        # prs haven been parsed, for preventing infinite loop
+        parsed_prs = []
+        while tmp_under_test_prs:
+            parsed_prs.extend(tmp_under_test_prs)
+            # the next tmp_under_test_prs
+            tmp_tmp_under_test_prs = []
+            for under_test_pr in tmp_under_test_prs:
+                # must be single pr, depends on None PR
+                if not self.__pr_connectivity_map.has_key(under_test_pr):
+                    continue
+                for pr in self.__pr_list:
+                    # disconnected with this pr
+                    if not self.__pr_connectivity_map[under_test_pr].has_key(pr):
+                        continue
+                    # if diconnected , [under_test_pr][pr] and [under_test_pr][pr] both equal True
+                    # if one-way connected, one is True the other if False
+                    if self.__pr_connectivity_map[under_test_pr][pr] and \
+                        self.__pr_connectivity_map[pr][under_test_pr]:
+                        # diconnected with under_test_pr means this pr is under test too
+                        under_test_prs.append(pr)
+                        if pr not in parsed_prs:
+                            tmp_tmp_under_test_prs.append(pr)
+            tmp_under_test_prs = tmp_tmp_under_test_prs
+        return under_test_prs
+
+    def wrap_manifest_file(self, file_path):
+        """
+        Generated manifest file
+        """
+        all_prs = self.get_all_related_prs(self.__repo, self.__merge_commit_sha, self.__pull_id, self.__actual_commit)
+        under_test_prs = self.get_under_test_prs()
+        # instance of manifest template
+        manifest = Manifest.instance_of_sample()
+        for pr in all_prs:
+            repo, sha1, _, _ = pr
+            repo_url = "https://github.com/{0}.git".format(repo)
+            if repo in under_test_prs:
+                manifest.update_manifest(repo_url, "", sha1, True)
+            else:
+                manifest.update_manifest(repo_url, "", sha1, False)
+
+        # manifest completion
+        for repo in manifest._repositories:
+            if 'branch' in repo and repo['commit-id'] == "" and repo['branch'] == "":
+                repo["branch"] = "master"
+
+        manifest.validate_manifest()
+        manifest.dump_to_json_file(file_path)
 
 def main():
     pr_parser = PrParser()
     passed_args = pr_parser.parse_args(sys.argv[1:])
     pr_parser.assign_args(passed_args)
-    pr_parser.write_build_properties_file()
+    pr_parser.wrap_manifest_file(os.path.join(os.getcwd(), "manifest-pr-gate"))
 
 if __name__ == "__main__":
     main()
