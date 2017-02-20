@@ -4,12 +4,12 @@ def printParams() {
 }
 
 def TESTS=[:]
+
 TESTS["FIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":true,"RUN_CIT_TEST":false]
 TESTS["Install Centos 6.5"]=["TEST_GROUP":"centos-6-5-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
 TESTS["CIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
 TESTS["Install Ubuntu 14.04"]=["TEST_GROUP":"ubuntu-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
 TESTS["Install ESXI 6.0"]=["TEST_GROUP":"esxi-6-min-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
-
 
 def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boolean RUN_CIT_TEST){
     node(node_name){
@@ -64,15 +64,47 @@ def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boo
                     if(fileExists ("downstream_file")) {
                         def props = readProperties file: "downstream_file"
                         failure_count = "${props.failures}".toInteger()
-                     }
-                     if (failure_count > 0){
-                         currentBuild.result = "SUCCESS"
-                         sh 'exit 1'
-                     }
+                    }
+                    if (failure_count > 0){
+                        currentBuild.result = "SUCCESS"
+                        sh 'exit 1'
+                    }
                 }
             }
         }
     }
+}
+
+
+def run_test(free_count, TESTS, start_point){
+     lock(label: FUNCTION_TEST_LABEL, quantity: free_count)
+     {
+         def test_branches = [:]
+         def lock_nodes=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())
+         test_names = TESTS.keySet() as String[]
+         for(int i=0;i<free_count;i++){
+             def node_name = lock_nodes[i].getName()
+             def test_name = test_names[start_point+i]
+             def test_group = TESTS[test_name]["TEST_GROUP"]
+             def run_fit_test = TESTS[test_name]["RUN_FIT_TEST"]
+             def run_cit_test = TESTS[test_name]["RUN_CIT_TEST"]
+             test_branches[test_name] = {
+                 function_test(node_name, test_group, run_fit_test, run_cit_test)
+             }
+         }
+         parallel test_branches
+    }
+}
+
+def reserve_resource(label_name){
+    int free_count=0
+    while(free_count<=0){
+        free_count = org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getFreeResourceAmount(label_name)
+        if(free_count == 0){
+            sleep 5
+        }
+    }
+    return free_count    
 }
 
 node{
@@ -107,24 +139,20 @@ node{
                     string(credentialsId: 'INTERNAL_TFTP_ZIP_FILE_URL', variable: 'INTERNAL_TFTP_ZIP_FILE_URL')
                     ]) {
                
-                    def FUNCTION_TEST_LABEL="${env.FUNCTION_TEST_LABEL}"
-                    def node_quantity = TESTS.size()
-                    def test_branches = [:]
-                    lock(label: FUNCTION_TEST_LABEL, quantity: node_quantity)
-                    { 
-                        def lock_nodes=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())
-                        test_names = TESTS.keySet() as String[]
-                        for(int i=0;i<node_quantity;i++){
-                            def node_name = lock_nodes[i].getName()
-                            def test_name = test_names[i]
-                            def test_group = TESTS[test_name]["TEST_GROUP"]
-                            def run_fit_test = TESTS[test_name]["RUN_FIT_TEST"]
-                            def run_cit_test = TESTS[test_name]["RUN_CIT_TEST"]
-                            test_branches[test_name] = {
-                                function_test(node_name, test_group, run_fit_test, run_cit_test)
-                            }
+                    int total = TESTS.size()
+                    int already = 0
+                    int rest = total
+                    while(rest>0){
+                        int free_count = reserve_resource("${env.FUNCTION_TEST_LABEL}")
+                        if (free_count < rest){
+                            run_test(free_count, TESTS, already)
+                            already = already + free_count
                         }
-                        parallel test_branches
+                        else{
+                            run_test(rest, TESTS, already)
+                            already = already + rest
+                        }
+                        rest = total - already
                     }
                 }
             }
