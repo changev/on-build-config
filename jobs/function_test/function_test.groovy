@@ -1,0 +1,136 @@
+@NonCPS
+def printParams() {
+  env.getEnvironment().each { name, value -> println "Name: $name -> Value $value" }
+}
+
+def TESTS=[:]
+TESTS["FIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":true,"RUN_CIT_TEST":false]
+TESTS["Install Centos 6.5"]=["TEST_GROUP":"centos-6-5-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+TESTS["CIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+TESTS["Install Ubuntu 14.04"]=["TEST_GROUP":"ubuntu-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+TESTS["Install ESXI 6.0"]=["TEST_GROUP":"esxi-6-min-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+
+
+def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boolean RUN_CIT_TEST){
+    node(node_name){
+        deleteDir()
+        def shareMethod
+        dir("Test_JFiles"){
+            checkout scm
+            shareMethod = load("jobs/shareMethod.groovy")
+        }
+        def url = "https://github.com/PengTian0/on-build-config.git"
+        def branch = "feature/test-pr_gate_pipeline"
+        def targetDir = "on-build-config"
+        shareMethod.checkout(url, branch, targetDir)
+ 
+        if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
+            unstash "${stash_manifest_name}"
+        }
+        if("${stash_manifest_path}" != null && "${stash_manifest_path}" != "null"){
+            env.MANIFEST_FILE="$stash_manifest_path"
+        }
+        else if("${MANIFEST_FILE_URL}" != null && "${MANIFEST_FILE_URL}" != "null"){
+            sh 'curl $MANIFEST_FILE_URL -o manifest'
+            env.MANIFEST_FILE = "manifest"
+        }
+        else{
+            error 'Please provide the manifest url or a stashed manifest'
+        }
+
+        timestamps{
+            withEnv([
+                "TEST_GROUP=$TEST_GROUP",
+                "RUN_CIT_TEST=$RUN_CIT_TEST",
+                "RUN_FIT_TEST=$RUN_FIT_TEST",
+                "SKIP_PREP_DEP=false",
+                "MANIFEST_FILE=${env.MANIFEST_FILE}",
+                "NODE_NAME=${env.NODE_NAME}"]
+            ){
+                try{
+                    timeout(50){
+                        sh 'Test_JFiles/jobs/function_test/function_test.sh'
+                    }
+                } catch(error){
+                    throw error
+                } finally{
+                    junit 'RackHD/test/*.xml'
+                    sh '''
+                    ./Test_JFiles/build-release-tools/application/parse_test_results.py \
+                    --test-result-file RackHD/test/*.xml  \
+                    --parameters-file downstream_file
+                    '''
+                    int failure_count = 0
+                    if(fileExists ("downstream_file")) {
+                        def props = readProperties file: "downstream_file"
+                        failure_count = "${props.failures}".toInteger()
+                     }
+                     if (failure_count > 0){
+                         currentBuild.result = "SUCCESS"
+                         sh 'exit 1'
+                     }
+                }
+            }
+        }
+    }
+}
+
+node{
+        try{
+            withEnv([
+                "HTTP_STATIC_FILES=${env.HTTP_STATIC_FILES}",
+                "TFTP_STATIC_FILES=${env.TFTP_STATIC_FILES}",
+                "API_PACKAGE_LIST=on-http-api1.1 on-http-api2.0 on-http-redfish-1.0",
+                "USE_VCOMPUTE=${env.USE_VCOMPUTE}",
+                "stash_manifest_name=${env.stash_manifest_name}",
+                "stash_manifest_path=${env.stash_manifest_path}",
+                "MANIFEST_FILE_URL=${env.MANIFEST_FILE_URL}"
+                ]){
+
+                withCredentials([
+                    usernamePassword(credentialsId: '752052b8-c884-4c2a-95ef-04e0f9fa0bc2', 
+                                     passwordVariable: 'JENKINS_PASS', 
+                                     usernameVariable: 'JENKINS_USER'),
+                    //usernamePassword(credentialsId: '00aa0b00-f027-4791-a539-51bf0181172a', 
+                    usernamePassword(credentialsId: 'ESXI_CREDS',
+                                     passwordVariable: 'ESXI_PASS', 
+                                     usernameVariable: 'ESXI_USER'),
+                    usernamePassword(credentialsId: 'SENTRY_USER', 
+                                     passwordVariable: 'SENTRY_PASS', 
+                                     usernameVariable: 'SENTRY_USER'), 
+                    string(credentialsId: 'SENTRY_HOST', variable: 'SENTRY_HOST'),
+                    string(credentialsId: 'SMB_USER', variable: 'SMB_USER'), 
+                    string(credentialsId: 'RACKHD_SMB_WINDOWS_REPO_PATH', variable: 'RACKHD_SMB_WINDOWS_REPO_PATH'),
+                    string(credentialsId: 'REDFISH_URL', variable: 'REDFISH_URL'), 
+                    string(credentialsId: 'BASE_REPO_URL', variable: 'BASE_REPO_URL'),
+                    string(credentialsId: 'INTERNAL_HTTP_ZIP_FILE_URL', variable: 'INTERNAL_HTTP_ZIP_FILE_URL'),
+                    string(credentialsId: 'INTERNAL_TFTP_ZIP_FILE_URL', variable: 'INTERNAL_TFTP_ZIP_FILE_URL')
+                    ]) {
+               
+                    def FUNCTION_TEST_LABEL="${env.FUNCTION_TEST_LABEL}"
+                    def node_quantity = TESTS.size()
+                    def test_branches = [:]
+                    lock(label: FUNCTION_TEST_LABEL, quantity: node_quantity)
+                    { 
+                        def lock_nodes=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())
+                        test_names = TESTS.keySet() as String[]
+                        for(int i=0;i<node_quantity;i++){
+                            def node_name = lock_nodes[i].getName()
+                            def test_name = test_names[i]
+                            def test_group = TESTS[test_name]["TEST_GROUP"]
+                            def run_fit_test = TESTS[test_name]["RUN_FIT_TEST"]
+                            def run_cit_test = TESTS[test_name]["RUN_CIT_TEST"]
+                            test_branches[test_name] = {
+                                function_test(node_name, test_group, run_fit_test, run_cit_test)
+                            }
+                        }
+                        parallel test_branches
+                    }
+                }
+            }
+        }catch(error){
+            echo "Caught: ${error}"
+            currentBuild.result = "FAILURE"
+            throw error
+       } 
+}
