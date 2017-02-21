@@ -18,12 +18,9 @@ node{
         withCredentials([string(credentialsId: 'JENKINSRHD_GITHUB_TOKEN', 
                                 variable: 'GITHUB_TOKEN')]) {
             if ("${currentBuild.result}" == null || "${currentBuild.result}" == "null"){
-                env.status = "success"
+                currentBuild.result = "SUCCESS"
             }
-            else {
-                env.status = "${currentBuild.result}"
-            }
-            printParams()
+            env.status = "${currentBuild.result}"
             sh './build-config/jobs/write_back_github/write_back_github.sh'
         }
     }

@@ -6,6 +6,8 @@ pushd $WORKSPACE
 
 build_status="${status}"
 
+echo "$build_status"
+
 #test(){
 ./build-config/build-release-tools/HWIMO-BUILD ./build-config/build-release-tools/application/post-result.py \
 --manifest_file "${stash_manifest_path}" \
