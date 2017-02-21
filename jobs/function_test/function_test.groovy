@@ -14,16 +14,9 @@ TESTS["Install ESXI 6.0"]=["TEST_GROUP":"esxi-6-min-install.v1.1.test","RUN_FIT_
 def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boolean RUN_CIT_TEST){
     node(node_name){
         deleteDir()
-        def shareMethod
-        dir("Test_JFiles"){
+        dir("on-build-config"){
             checkout scm
-            shareMethod = load("jobs/shareMethod.groovy")
         }
-        def url = "https://github.com/PengTian0/on-build-config.git"
-        def branch = "feature/test-pr_gate_pipeline"
-        def targetDir = "on-build-config"
-        shareMethod.checkout(url, branch, targetDir)
- 
         if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
             unstash "${stash_manifest_name}"
         }
@@ -38,6 +31,24 @@ def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boo
             error 'Please provide the manifest url or a stashed manifest'
         }
 
+        sh '''#!/bin/bash
+        ./on-build-config/build-release-tools/HWIMO-BUILD ./on-build-config/build-release-tools/application/parse_manifest.py \
+        --manifest-file $MANIFEST_FILE \
+        --parameters-file downstream_file
+        '''
+
+        env.MODIFY_API_PACKAGE = false
+        if(fileExists ('downstream_file')) {
+            def props = readProperties file: 'downstream_file'
+            if(props['REPOS_UNDER_TEST']) {
+                env.REPOS_UNDER_TEST = "${props.REPOS_UNDER_TEST}"
+                def repos = env.REPOS_UNDER_TEST.tokenize(',')
+                if(repos.contains("on-http") && repos.contains("RackHD")){
+                    env.MODIFY_API_PACKAGE = true
+                }
+            }
+        }
+
         timestamps{
             withEnv([
                 "TEST_GROUP=$TEST_GROUP",
@@ -49,14 +60,14 @@ def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boo
             ){
                 try{
                     timeout(50){
-                        sh 'Test_JFiles/jobs/function_test/function_test.sh'
+                        sh 'on-build-config/jobs/function_test/function_test.sh'
                     }
                 } catch(error){
                     throw error
                 } finally{
                     junit 'RackHD/test/*.xml'
                     sh '''
-                    ./Test_JFiles/build-release-tools/application/parse_test_results.py \
+                    ./on-build-config/build-release-tools/application/parse_test_results.py \
                     --test-result-file RackHD/test/*.xml  \
                     --parameters-file downstream_file
                     '''
@@ -76,23 +87,24 @@ def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boo
 }
 
 
-def run_test(free_count, TESTS, start_point){
-     lock(label: FUNCTION_TEST_LABEL, quantity: free_count)
-     {
-         def test_branches = [:]
-         def lock_nodes=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())
-         test_names = TESTS.keySet() as String[]
-         for(int i=0;i<free_count;i++){
-             def node_name = lock_nodes[i].getName()
-             def test_name = test_names[start_point+i]
-             def test_group = TESTS[test_name]["TEST_GROUP"]
-             def run_fit_test = TESTS[test_name]["RUN_FIT_TEST"]
-             def run_cit_test = TESTS[test_name]["RUN_CIT_TEST"]
-             test_branches[test_name] = {
-                 function_test(node_name, test_group, run_fit_test, run_cit_test)
-             }
-         }
-         parallel test_branches
+def run_test(TESTS, label_name){
+    def test_count = TESTS.size()
+    lock(label: label_name, quantity: test_count)
+    {
+        def test_branches = [:]
+        def lock_nodes=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())
+        test_names = TESTS.keySet() as String[]
+        for(int i=0;i<test_count;i++){
+            def node_name = lock_nodes[i].getName()
+            def test_name = test_names[i]
+            def test_group = TESTS[test_name]["TEST_GROUP"]
+            def run_fit_test = TESTS[test_name]["RUN_FIT_TEST"]
+            def run_cit_test = TESTS[test_name]["RUN_CIT_TEST"]
+            test_branches[test_name] = {
+                function_test(node_name, test_group, run_fit_test, run_cit_test)
+            }
+        }
+        parallel test_branches
     }
 }
 
@@ -140,20 +152,11 @@ node{
                     ]) {
                
                     int total = TESTS.size()
-                    int already = 0
-                    int rest = total
-                    while(rest>0){
-                        int free_count = reserve_resource("${env.FUNCTION_TEST_LABEL}")
-                        if (free_count < rest){
-                            run_test(free_count, TESTS, already)
-                            already = already + free_count
-                        }
-                        else{
-                            run_test(rest, TESTS, already)
-                            already = already + rest
-                        }
-                        rest = total - already
+                    int free_count = 0
+                    while(free_count < total){
+                        free_count = reserve_resource("${env.FUNCTION_TEST_LABEL}")
                     }
+                    run_test(TESTS, "${env.FUNCTION_TEST_LABEL}")
                 }
             }
         }catch(error){

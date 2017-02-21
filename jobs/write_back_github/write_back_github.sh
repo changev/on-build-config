@@ -6,7 +6,7 @@ pushd $WORKSPACE
 
 build_status="${status}"
 
-
+#test(){
 ./build-config/build-release-tools/HWIMO-BUILD ./build-config/build-release-tools/application/post-result.py \
 --manifest_file "${stash_manifest_path}" \
 --jenkins_url "${JENKINS_URL}" \
@@ -20,5 +20,5 @@ build_status="${status}"
 --public-jenkins-url "http://147.178.202.18/" \
 --status "${build_status,,}" \
 --ghtoken ${GITHUB_TOKEN}
-
+#}
 popd

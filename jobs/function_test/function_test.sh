@@ -25,6 +25,7 @@ RUN_CIT_TEST="${RUN_CIT_TEST}"
 if [ ! -z "${5}" ]; then
   RUN_FIT_TEST=$5
 fi
+MODIFY_API_PACKAGE="${MODIFY_API_PACKAGE}"
 
 dlHttpFiles() {
   dir=${WORKSPACE}/build-deps/on-http/static/http/common
@@ -83,12 +84,8 @@ preparePackages() {
           npm install --production
           popd
       done
-
-      ls -l
-      mkdir RackHD
-      cp -r  build-deps/RackHD .
-      cp -r  build-deps/on-build-config build-config
-
+      cp -r build-deps/RackHD .
+      cp -r build-deps/on-build-config build-config
       pushd build-config
       ./build-config
       popd
@@ -232,7 +229,9 @@ setupVirtualEnv(){
   ./mkenv.sh on-build-config
   source myenv_on-build-config
   popd
-  apiPackageModify
+  if [ "$MODIFY_API_PACKAGE" == true ] ; then
+    apiPackageModify
+  fi
 }
 
 BASE_REPO_URL="${BASE_REPO_URL}"
@@ -330,7 +329,7 @@ if [ "$RUN_CIT_TEST" == true ] || [ "$RUN_FIT_TEST" == true ] ; then
 
 fi
 
-if [ "$SKIP_PREP_DEP" == false ] ; then
+if [ "$MODIFY_API_PACKAGE" == true ] ; then
  sudo rm -rf ${WORKSPACE}/build-deps/on-http
 fi
 

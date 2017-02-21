@@ -13,7 +13,7 @@ node{
                     deleteDir()
                     env.current_workspace = pwd()
                     dir("build-config"){
-                        git branch: 'feature/test-pr_gate_pipeline', url: 'https://github.com/PengTian0/on-build-config'
+                        checkout scm 
                     }
                     if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
                         unstash "${stash_manifest_name}"
@@ -32,13 +32,11 @@ node{
                     --manifest-file $MANIFEST_FILE_PATH \
                     --parameters-file downstream_file
                     '''
+                    env.REPOS_NEED_UNIT_TEST = ""
                     if(fileExists ('downstream_file')) {
                         def props = readProperties file: 'downstream_file'
                         if(props['REPOS_NEED_UNIT_TEST']) {
                             env.REPOS_NEED_UNIT_TEST = "${props.REPOS_NEED_UNIT_TEST}"
-                        }
-                        else{
-                            error("Failed because the repositories which need unit test is not generated")
                         }
                     }
                     stash name: "unittest_manifest", includes: "${MANIFEST_FILE_PATH}"
@@ -51,7 +49,7 @@ node{
                             node(node_name){
                                 deleteDir()
                                 dir("build-config"){
-                                    git branch: 'feature/test-pr_gate_pipeline', url: 'https://github.com/PengTian0/on-build-config'
+                                    checkout scm
                                 }
                                 unstash 'unittest_manifest'
                                 timeout(15){
