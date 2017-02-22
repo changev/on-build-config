@@ -5,11 +5,11 @@ def printParams() {
 
 def TESTS=[:]
 
-TESTS["FIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":true,"RUN_CIT_TEST":false]
-TESTS["Install Centos 6.5"]=["TEST_GROUP":"centos-6-5-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+//TESTS["FIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":true,"RUN_CIT_TEST":false]
+//TESTS["Install Centos 6.5"]=["TEST_GROUP":"centos-6-5-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
 TESTS["CIT"]=["TEST_GROUP":"smoke-tests","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
-TESTS["Install Ubuntu 14.04"]=["TEST_GROUP":"ubuntu-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
-TESTS["Install ESXI 6.0"]=["TEST_GROUP":"esxi-6-min-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+//TESTS["Install Ubuntu 14.04"]=["TEST_GROUP":"ubuntu-minimal-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
+//TESTS["Install ESXI 6.0"]=["TEST_GROUP":"esxi-6-min-install.v1.1.test","RUN_FIT_TEST":false,"RUN_CIT_TEST":true]
 
 def function_test(String node_name, String TEST_GROUP, Boolean RUN_FIT_TEST, Boolean RUN_CIT_TEST){
     node(node_name){
