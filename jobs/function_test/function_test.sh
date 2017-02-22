@@ -311,10 +311,10 @@ if [ "$RUN_CIT_TEST" == true ] || [ "$RUN_FIT_TEST" == true ] ; then
   # time to make the env instead of doing sleeps...
   setupVirtualEnv
   waitForAPI
+  nodesOn &
   generateSolLog
   # Run tests
-  runTests &
-  nodesOn
+  runTests 
 
   # Clean Up below
 
