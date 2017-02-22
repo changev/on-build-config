@@ -108,14 +108,14 @@ apiPackageModify() {
     sed -i "/build-package.bash/d" make-deb.sh
     sed -i "/GITCOMMITDATE/d" make-deb.sh
     sed -i "/mkdir/d" make-deb.sh
-    sudo bash make-deb.sh
+    bash make-deb.sh
     popd
     for package in ${API_PACKAGE_LIST}; do
-      sudo pip uninstall -y ${package//./-}
+      pip uninstall -y ${package//./-}
       pushd ${WORKSPACE}/build-deps/on-http/$package
         fail=true
         while $fail; do
-          sudo python setup.py install
+          python setup.py install
           if [ $? -eq 0 ];then
         	  fail=false
           fi
