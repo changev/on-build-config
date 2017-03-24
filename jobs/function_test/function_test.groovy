@@ -8,44 +8,55 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
         resource_name = shareMethod.getLockedResourceName(lock_resources,label_name)[0]
         node(resource_name){
             deleteDir()
-            dir("on-build-config"){
+            // dir name is the same with that in test.sh
+            dir("build-config"){
                 checkout scm
             }
-            // Get the manifest file
-            if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
-                unstash "${stash_manifest_name}"
-            }
-            if("${stash_manifest_path}" != null && "${stash_manifest_path}" != "null"){
-                env.MANIFEST_FILE="$stash_manifest_path"
-            }
-            else if("${MANIFEST_FILE_URL}" != null && "${MANIFEST_FILE_URL}" != "null"){
-                sh 'curl $MANIFEST_FILE_URL -o manifest'
-                env.MANIFEST_FILE = "manifest"
-            }
-            else{
-                error 'Please provide the manifest url or a stashed manifest'
-            }
-         
-            // If the manifest file contains PR of on-http and RackHD, 
-            // set the environment variable MODIFY_API_PACKAGE as true
-            // The test.sh script will install api package according to API_PACKAGE_LIST
-            sh '''#!/bin/bash
-            ./on-build-config/build-release-tools/HWIMO-BUILD ./on-build-config/build-release-tools/application/parse_manifest.py \
-            --manifest-file $MANIFEST_FILE \
-            --parameters-file downstream_file
-            '''
 
-            env.MODIFY_API_PACKAGE = false
-            if(fileExists ('downstream_file')) {
-                def props = readProperties file: 'downstream_file'
-                if(props['REPOS_UNDER_TEST']) {
-                    env.REPOS_UNDER_TEST = "${props.REPOS_UNDER_TEST}"
-                    def repos = env.REPOS_UNDER_TEST.tokenize(',')
-                    if(repos.contains("on-http") && repos.contains("RackHD")){
-                        env.MODIFY_API_PACKAGE = true
+            // Determine test type
+            env.MANIFEST_SRC_TEST="true"
+            if ("${OVA_POST_TEST}" == "true" || "${DOCKER_POST_TEST}" == "true" || "${VAGRANT_POST_TEST}" == "true"){
+                env.MANIFEST_SRC_TEST="false"
+            }
+
+            if ("${MANIFEST_SRC_TEST}" == "true") {
+                // Get the manifest file
+                if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
+                    unstash "${stash_manifest_name}"
+                }
+                if("${stash_manifest_path}" != null && "${stash_manifest_path}" != "null"){
+                    env.MANIFEST_FILE="$stash_manifest_path"
+                }
+                else if("${MANIFEST_FILE_URL}" != null && "${MANIFEST_FILE_URL}" != "null"){
+                    sh 'curl $MANIFEST_FILE_URL -o manifest'
+                    env.MANIFEST_FILE = "manifest"
+                }
+                else{
+                    error 'Please provide the manifest url or a stashed manifest'
+                }
+            
+                // If the manifest file contains PR of on-http and RackHD, 
+                // set the environment variable MODIFY_API_PACKAGE as true
+                // The test.sh script will install api package according to API_PACKAGE_LIST
+                sh '''#!/bin/bash
+                ./build-config/build-release-tools/HWIMO-BUILD ./build-config/build-release-tools/application/parse_manifest.py \
+                --manifest-file $MANIFEST_FILE \
+                --parameters-file downstream_file
+                '''
+
+                env.MODIFY_API_PACKAGE = false
+                if(fileExists ('downstream_file')) {
+                    def props = readProperties file: 'downstream_file'
+                    if(props['REPOS_UNDER_TEST']) {
+                        env.REPOS_UNDER_TEST = "${props.REPOS_UNDER_TEST}"
+                        def repos = env.REPOS_UNDER_TEST.tokenize(',')
+                        if(repos.contains("on-http") && repos.contains("RackHD")){
+                            env.MODIFY_API_PACKAGE = true
+                        }
                     }
                 }
             }
+
 
             timestamps{
                 withEnv([
@@ -59,18 +70,47 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
                 ){
                     try{
                         timeout(60){
-                            sh '''
-                            ./on-build-config/jobs/function_test/prepare.sh 
-                            ./build-config/test.sh
+                            // Prepare RackHD
+                            if("${OVA_POST_TEST}" == "true"){
+                                // env vars in this sh are defined in jobs/build_ova/ova_post_test.groovy
+                                unstash "${OVA_STASH_NAME}"
+                                sh './build-config/jobs/build_ova/prepare_ova_post_test.sh'
+                            } 
+                            if ("${MANIFEST_SRC_TEST}" == "true") {
+                                // This scipts can be separated into manifest_src_prepare and common_prepare
+                                sh './build-config/jobs/function_test/prepare.sh'
+                            }
+
+                            // Pre-process assistant test scripts
+                            sh '''#!/bin/bash -x
+                            pushd build-config
+                            ./build-config
+                            popd
                             '''
+
+                            // Get main test scripts for un-manifest-src test
+                            if ("${MANIFEST_SRC_TEST}" != "true") {
+                                def exists = fileExists 'RackHD'
+                                if( !exists ){
+                                    echo "Checkout RackHD for un-src test."
+                                    def url = "https://github.com/RackHD/RackHD.git"
+                                    def branch = "master"
+                                    def targetDir = "RackHD"
+                                    shareMethod.checkout(url, branch, targetDir)
+                                }
+                            }
+
+                            // Run smoke test
+                            sh './build-config/test.sh'
                         }
                     } catch(error){
                         throw error
                     } finally{
-                        
+                        // Gather and archive test logs
                         def artifact_dir = test_name.replaceAll(' ', '-')
                         sh '''#!/bin/bash -x
                         mkdir '''+"$artifact_dir"+'''
+                        pwd
                         ./build-config/post-deploy.sh
                         files=$( ls build-deps/*.log )
                         if [ ! -z "$files" ];then
@@ -83,32 +123,42 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
                         '''
                         archiveArtifacts "$artifact_dir/*.*"
 
+                        // Clean up test stack
                         sh '''#!/bin/bash -x
                         ./build-config/jobs/function_test/cleanup.sh
+                        '''
+
+                        // [Based on junit xml log] Write test results to github
+                        sh '''#!/bin/bash -x
                         find RackHD/test/ -maxdepth 1 -name "*.xml" > files.txt
                         files=$( paste -s -d ' ' files.txt )
-                        if [ -z "$files" ];then
-                            echo "No test result files generated, maybe it's aborted"
-                            exit 1
-                        else
+                        if [ -n "$files" ];then
                             ./build-config/build-release-tools/application/parse_test_results.py \
                             --test-result-file "$files"  \
                             --parameters-file downstream_file
+                        elif [ ${MANIFEST_SRC_TEST} == "true" ]; then
+                            echo "No test result files generated, maybe it's aborted"
+                            exit 1
                         fi
                         '''
 
-                        junit 'RackHD/test/*.xml'
-                        int failure_count = 0
-                        int error_count = 0
-                        if(fileExists ("downstream_file")) {
-                            def props = readProperties file: "downstream_file"
-                            failure_count = "${props.failures}".toInteger()
-                            error_count = "${props.errors}".toInteger()
-                        }
-                        if (failure_count > 0 || error_count > 0){
-                            currentBuild.result = "SUCCESS"
-                            echo "there are failed test cases"
-                            sh 'exit 1'
+                        // [Based on junit xml log] Determine pipeline status of this build, success or failure.
+                        def junitFiles = findFiles glob: 'RackHD/test/*.xml'
+                        boolean exists = junitFiles.length > 0
+                        if (exists){
+                            junit 'RackHD/test/*.xml'
+                            int failure_count = 0
+                            int error_count = 0
+                            if(fileExists ("downstream_file")) {
+                                def props = readProperties file: "downstream_file"
+                                failure_count = "${props.failures}".toInteger()
+                                error_count = "${props.errors}".toInteger()
+                            }
+                            if (failure_count > 0 || error_count > 0){
+                                currentBuild.result = "SUCCESS"
+                                echo "there are failed test cases"
+                                sh 'exit 1'
+                            }
                         }
                     }
                 }
@@ -149,7 +199,10 @@ node{
             "stash_manifest_name=${env.stash_manifest_name}",
             "stash_manifest_path=${env.stash_manifest_path}",
             "MANIFEST_FILE_URL=${env.MANIFEST_FILE_URL}",
-            "TESTS=${env.TESTS}"
+            "TESTS=${env.TESTS}",
+            "OVA_POST_TEST=${env.OVA_POST_TEST}",
+            "DOCKER_POST_TEST=${env.DOCKER_POST_TEST}",
+            "VAGRANT_POST_TEST=${env.VAGRANT_POST_TEST}"
         ]){
             withCredentials([
                 usernamePassword(credentialsId: 'ESXI_CREDS',
