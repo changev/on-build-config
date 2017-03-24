@@ -3,7 +3,8 @@ set -e
 # Environmental requirement:
 # docker service running and docker have already logged with Rackhd Dockerhub ID,
 #     cmd 'docker login', if not logged then can't push images to dockerhub
-
+cd DOCKER
+docker -i load $DOCKER_STASH_PATH
 docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
 
 while read -r LINE; do
@@ -16,7 +17,7 @@ while read -r LINE; do
             exit 1
         fi
     done
-done < $WORKSPACE/build_record
+done < $DOCKER_RECORD_STASH_PATH
 
 # Clean UP. (was in Jenkins job post-build, avoid failure impacts build status.)
 set +e
