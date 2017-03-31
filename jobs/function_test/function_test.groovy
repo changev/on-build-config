@@ -8,9 +8,15 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
         resource_name = shareMethod.getLockedResourceName(lock_resources,label_name)[0]
         node(resource_name){
             deleteDir()
-            dir("on-build-config"){
+            dir("build-config"){
                 checkout scm
             }
+
+            // Determine test type
+            // Default
+            env.MANIFEST_SRC_TEST="true"
+            // Different test type can be setup here
+
             // Get the manifest file
             if("${stash_manifest_name}" != null && "${stash_manifest_name}" != "null"){
                 unstash "${stash_manifest_name}"
@@ -30,7 +36,7 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
             // set the environment variable MODIFY_API_PACKAGE as true
             // The test.sh script will install api package according to API_PACKAGE_LIST
             sh '''#!/bin/bash
-            ./on-build-config/build-release-tools/HWIMO-BUILD ./on-build-config/build-release-tools/application/parse_manifest.py \
+            ./build-config/build-release-tools/HWIMO-BUILD ./build-config/build-release-tools/application/parse_manifest.py \
             --manifest-file $MANIFEST_FILE \
             --parameters-file downstream_file
             '''
@@ -59,8 +65,24 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
                 ){
                     try{
                         timeout(60){
+                            
+                            if ("${MANIFEST_SRC_TEST}" == "true") {
+                                sh '''
+                                ./build-config/jobs/function_test/prepare_manifest_src.sh 
+                                '''
+                            }
+                            // Different test type preparation work can be added here.
+
+                            // Pre-process assistant test scripts before run tests
+                            sh '''#!/bin/bash -x
+                            pushd build-config
+                            ./build-config
+                            popd
+                            '''
+
+                            // Common preparation and running test
                             sh '''
-                            ./on-build-config/jobs/function_test/prepare.sh 
+                            ./build-config/jobs/function_test/prepare.sh 
                             ./build-config/test.sh
                             '''
                         }
@@ -83,32 +105,36 @@ def function_test(String test_name, String label_name, String TEST_GROUP, Boolea
                         '''
                         archiveArtifacts "$artifact_dir/*.*"
 
+                        // [Based on junit xml log] Write test results to github
                         sh '''#!/bin/bash -x
-                        ./build-config/jobs/function_test/cleanup.sh
                         find RackHD/test/ -maxdepth 1 -name "*.xml" > files.txt
                         files=$( paste -s -d ' ' files.txt )
-                        if [ -z "$files" ];then
-                            echo "No test result files generated, maybe it's aborted"
-                            exit 1
-                        else
+                        if [ -n "$files" ];then
                             ./build-config/build-release-tools/application/parse_test_results.py \
                             --test-result-file "$files"  \
                             --parameters-file downstream_file
+                        elif [ ${MANIFEST_SRC_TEST} == "true" ]; then
+                            echo "No test result files generated, maybe it's aborted"
+                            exit 1
                         fi
                         '''
-
-                        junit 'RackHD/test/*.xml'
-                        int failure_count = 0
-                        int error_count = 0
-                        if(fileExists ("downstream_file")) {
-                            def props = readProperties file: "downstream_file"
-                            failure_count = "${props.failures}".toInteger()
-                            error_count = "${props.errors}".toInteger()
-                        }
-                        if (failure_count > 0 || error_count > 0){
-                            currentBuild.result = "SUCCESS"
-                            echo "there are failed test cases"
-                            sh 'exit 1'
+                        // [Based on junit xml log] Determine pipeline status of this build, success or failure.
+                        def junitFiles = findFiles glob: 'RackHD/test/*.xml'
+                        boolean exists = junitFiles.length > 0
+                        if (exists){
+                            junit 'RackHD/test/*.xml'
+                            int failure_count = 0
+                            int error_count = 0
+                            if(fileExists ("downstream_file")) {
+                                def props = readProperties file: "downstream_file"
+                                failure_count = "${props.failures}".toInteger()
+                                error_count = "${props.errors}".toInteger()
+                            }
+                            if (failure_count > 0 || error_count > 0){
+                                currentBuild.result = "SUCCESS"
+                                echo "there are failed test cases"
+                                sh 'exit 1'
+                            }
                         }
                     }
                 }
