@@ -13,16 +13,16 @@ bmc_account_list="${BMC_ACCOUNT_LIST}"
 handled_ip_list=""
 vnode_num=0
 timeout=0
-maxto=20
+maxto=100
 while [ ${timeout} != ${maxto} ]; do
     ip_list=`arp | awk '{print $1}' | xargs`
-    echo "IP LIST: $ip_list"
+    echo $(date +"%T") "IP LIST: $ip_list"
     for ip in $ip_list; do
         if [[ "${ip%%.*}" == "172" ]] && [[ "$handled_ip_list" != *"$ip"* ]]; then
             ping -c 1 -w 5 $ip
             if [ $? == 0 ]; then
                 for bmc in $bmc_account_list; do
-                    echo "ipmi cmd: ipmitool -I lanplus -H $ip -U XXXXX -P XXXXX -R 1 -N 3 chassis power status"
+                    echo $(date +"%T") "ipmi cmd: ipmitool -I lanplus -H $ip -U XXXXX -P XXXXX -R 1 -N 3 chassis power status"
                     ipmitool -I lanplus -H $ip -U ${bmc%:*} -P ${bmc#*:} -R 1 -N 3 chassis power status |grep on
                     if [ $? == 0 ]; then
                         #raw logs saved in /home/vagrant/src/, which is the $WORKSPACE/build-deps of host.
@@ -39,7 +39,7 @@ while [ ${timeout} != ${maxto} ]; do
                         chmod oug+x cmd.sh
                         #run cmd.sh in screen, sol activate simplely run in background can't work.
                         screen -dmS sol bash cmd.sh
-                        echo "The number of vnode $ip is $vnode_num"
+                        echo $(date +"%T") "The number of vnode $ip is $vnode_num"
                         handled_ip_list="$handled_ip_list $ip"
                         vnode_num=`expr ${vnode_num} + 1`
                     fi
@@ -48,7 +48,7 @@ while [ ${timeout} != ${maxto} ]; do
         fi    
     done
     #after more than 5*20 seconds all nodes are believed have got the IP by DHCP
-    sleep 5
+    sleep 1
     timeout=`expr ${timeout} + 1`
 done
     
