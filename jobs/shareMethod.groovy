@@ -62,27 +62,27 @@ def buildAndPublish(){
 
         stage("Images Build"){
             parallel 'vagrant build':{
-                retry(retry_times){
-                    load("jobs/build_vagrant/build_vagrant.groovy")
-                }
+                //retry(retry_times){
+                    //load("jobs/build_vagrant/build_vagrant.groovy")
+                //}
             }, 'ova build':{
                 retry(retry_times){
                     load("jobs/build_ova/build_ova.groovy")
                 }
             }, 'build docker':{
-                retry(retry_times){
-                    load("jobs/build_docker/build_docker.groovy")
-                }
+                //retry(retry_times){
+                    //load("jobs/build_docker/build_docker.groovy")
+                //}
             }
         }
 
         stage("Post Test"){
             parallel 'vagrant post test':{
-                load("jobs/build_vagrant/vagrant_post_test.groovy")
+                //load("jobs/build_vagrant/vagrant_post_test.groovy")
             }, 'ova post test loader':{
                 load("jobs/build_ova/ova_post_test.groovy")
             }, 'docker post test':{
-                load("jobs/build_docker/docker_post_test.groovy")
+                //load("jobs/build_docker/docker_post_test.groovy")
             }
         }
 

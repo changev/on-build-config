@@ -15,7 +15,7 @@ node(build_ova_node){ws{
                 "BINTRAY_DISTRIBUTION=trusty", 
                 "BINTRAY_ARCHITECTURE=amd64"]){
                 def current_workspace = pwd()
-                deleteDir()
+                //deleteDir()
                 def shareMethod
                 dir("Build_OVA_JFiles"){
                     checkout scm
@@ -24,11 +24,11 @@ node(build_ova_node){ws{
                 def url = "https://github.com/RackHD/RackHD.git"
                 def branch = "${env.RACKHD_COMMIT}"
                 def targetDir = "build"
-                shareMethod.checkout(url, branch, targetDir)
+                //shareMethod.checkout(url, branch, targetDir)
 
                 timeout(180){
                     withEnv(["WORKSPACE=${current_workspace}"]){
-                        sh './Build_OVA_JFiles/jobs/build_ova/build_ova.sh'
+                        //sh './Build_OVA_JFiles/jobs/build_ova/build_ova.sh'
                     }
                 }
                 archiveArtifacts 'build/packer/*.ova, build/packer/*.log, build/packer/*.md5, build/packer/*.sha'
