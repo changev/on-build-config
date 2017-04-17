@@ -44,7 +44,7 @@ def buildAndPublish(){
     int retry_times = 3
     stage("Packages Build"){
         retry(retry_times){
-            load("jobs/build_debian/build_debian.groovy")
+            //load("jobs/build_debian/build_debian.groovy")
         }
     }
     waitForFreeResource("docker",1)
