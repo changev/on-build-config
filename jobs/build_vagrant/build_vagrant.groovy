@@ -6,7 +6,6 @@ node{
     shareMethod = load("jobs/ShareMethod.groovy")
 }
 
-
 lock("vagrant_build"){
     String label_name = "packer_vagrant"
     lock(label:label_name,quantity:1){
@@ -23,15 +22,13 @@ lock("vagrant_build"){
                     "RACKHD_COMMIT=${env.RACKHD_COMMIT}",
                     "RACKHD_VERSION=${env.RACKHD_VERSION}",
                     "IS_OFFICIAL_RELEASE=${env.IS_OFFICIAL_RELEASE}",
+                    "ARTIFACTORY_URL=${env.ARTIFACTORY_URL}",
+                    "IS_OFFICIAL_RELEASE=${env.IS_OFFICIAL_RELEASE}",
                     "OS_VER=${env.OS_VER}",
                     "BUILD_TYPE=virtualbox",
-                    "BINTRAY_SUBJECT=${env.BINTRAY_SUBJECT}",
-                    "BINTRAY_REPO=debian",
-                    "CI_BINTRAY_SUBJECT=${env.CI_BINTRAY_SUBJECT}",
-                    "CI_BINTRAY_REPO=debian",
-                    "BINTRAY_COMPONENT=main", 
-                    "BINTRAY_DISTRIBUTION=trusty", 
-                    "BINTRAY_ARCHITECTURE=amd64"]){
+                    "STAGE_REPO_NAME=${env.STAGE_REPO_NAME}",
+                    "DEB_COMPONENT=${env.DEB_COMPONENT}",
+                    "DEB_DISTRIBUTION=trusty"]){
                     def current_workspace = pwd()
                     deleteDir()
                     dir("on-build-config"){
@@ -41,7 +38,7 @@ lock("vagrant_build"){
                     def branch = "${env.RACKHD_COMMIT}"
                     def targetDir = "build"
                     shareMethod.checkout(url, branch, targetDir)
-                
+               
                     step ([$class: 'CopyArtifact',
                     projectName: 'VAGRANT_CACHE_BUILD',
                     target: 'cache_image']);
