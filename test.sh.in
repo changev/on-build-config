@@ -311,7 +311,7 @@ fetchOVALog(){
 ######################################
 
 if [ "$RUN_CIT_TEST" == true ] || [ "$RUN_FIT_TEST" == true ] ; then
-  if [ "$OVA_POST_TEST" == "true" ]; then
+  if [ "$TEST_TYPE" == "ova" ]; then
     # based on the assumption that in the same folder, the VMs has been exist normally. so don't destroy VM here.
     
     nodesCreate

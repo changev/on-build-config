@@ -50,25 +50,15 @@ def buildAndPublish(){
     int retry_times = 3
     stage("Packages Build"){
         retry(retry_times){
-            load("jobs/build_debian/build_debian.groovy")
+            //load("jobs/build_debian/build_debian.groovy")
         }
     }
     // lock a docker resource from build to release
-    lock(label:"docker",quantity:1){
-        def lock_resources=org.jenkins.plugins.lockableresources.LockableResourcesManager.class.get().getResourcesFromBuild(currentBuild.getRawBuild())       
-        docker_resources_name = getLockedResourceName(lock_resources,"docker")
-        if(docker_resources_name.size>0){
-            env.build_docker_node = docker_resources_name[0]
-        }
-        else{
-            echo "Failed to find resource with label docker"
-            currentBuild.result="FAILURE"
-        }
-
+    lock(){
         stage("Images Build"){
             parallel 'vagrant build':{
                 retry(retry_times){
-                    load("jobs/build_vagrant/build_vagrant.groovy")
+                    //load("jobs/build_vagrant/build_vagrant.groovy")
                 }
             }, 'ova build':{
                 retry(retry_times){
@@ -76,18 +66,18 @@ def buildAndPublish(){
                 }
             }, 'build docker':{
                 retry(retry_times){
-                    load("jobs/build_docker/build_docker.groovy")
+                    //load("jobs/build_docker/build_docker.groovy")
                 }
             }
         }
 
         stage("Post Test"){
             parallel 'vagrant post test':{
-                load("jobs/build_vagrant/vagrant_post_test.groovy")
+                //load("jobs/build_vagrant/vagrant_post_test.groovy")
             }, 'ova post test loader':{
                 load("jobs/build_ova/ova_post_test.groovy")
             }, 'docker post test':{
-                load("jobs/build_docker/docker_post_test.groovy")
+                //load("jobs/build_docker/docker_post_test.groovy")
             }
         }
 

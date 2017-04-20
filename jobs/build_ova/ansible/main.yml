@@ -4,6 +4,7 @@
       become: yes
       shell: |
         ip route add default via {{ ova_gateway }} dev {{ ova_net_interface }}
+      ignore_errors: True
       tags:
         - config-gateway
 

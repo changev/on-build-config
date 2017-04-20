@@ -20,8 +20,9 @@ def setTests(TESTS){
 def setRepoDir(repo_dir){
     this.repo_dir = repo_dir
 }
-def setType(type){
-    this.TEST_TYPE = type
+def setType(test_type){
+    this.TEST_TYPE = test_type
+    env.TEST_TYPE = test_type
 }
 def setManifest(String manifest_name, String manifest_path){
     this.stash_manifest_name = manifest_name
@@ -44,7 +45,7 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
                     checkout scm
                 }
 
-                if ("$TEST_TYPE" == "manifest"){
+                if (this.TEST_TYPE == "manifest"){
                     // Get the manifest file
                     unstash "$stash_manifest_name"
                     env.MANIFEST_FILE="$stash_manifest_path"
@@ -84,14 +85,15 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
                         try{
                             timeout(60){
                                 // Prepare RackHD
-                                if("$TEST_TYPE" == "ova"){
+                                echo "$TEST_TYPE"
+                                if(this.TEST_TYPE == "ova"){
                                     // env vars in this sh are defined in jobs/build_ova/ova_post_test.groovy
                                     unstash "$ova_name"
                                     env.OVA_PATH = "$ova_path"
                                     sh './build-config/jobs/build_ova/prepare_ova_post_test.sh'
                                 }
 
-                                if ("$TEST_TYPE" == "manifest") {
+                                if (this.TEST_TYPE == "manifest") {
                                     // This scipts can be separated into manifest_src_prepare and common_prepare
                                     sh './build-config/jobs/function_test/prepare.sh'
                                 }
@@ -104,7 +106,7 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
                                 '''
 
                                 // Get main test scripts for un-manifest-src test
-                                if ("$TEST_TYPE" != "manifest") {
+                                if (this.TEST_GROUP != "manifest") {
                                     def exists = fileExists 'RackHD'
                                     if( !exists ){
                                         echo "Checkout RackHD for un-src test."
@@ -191,12 +193,12 @@ def triggerTestsParallely(){
     // CIT,FIT,Install Ubuntu 14.04,Install ESXI 6.0,Install Centos 6.5
     List tests = Arrays.asList(this.TESTS.split(','))
     def SIGN = ""
-    if ("$type" == "ova"){
+    if ("$TEST_TYPE" == "ova"){
         SIGN = "OVA "
     }
     for(int i=0;i<tests.size();i++){
-        TEST_TYPE = tests[i]
-        KEY = "$SIGN$TEST_TYPE"
+        TEST_NAME = tests[i]
+        KEY = "$SIGN$TEST_NAME"
         RUN_TESTS[KEY]=ALL_TESTS[tests[i]]
     }
     def used_resources = []
@@ -242,8 +244,9 @@ def archiveArtifactsToTarget(target){
 
 def run(TESTS, String manifest_name=null, String manifest_path=null, String repo_dir, String test_type="manifest", String ova_name=null, String ova_path=null){
     // Run test in parallel
+    echo "$TESTS, $manifest_name, $manifest_path, $repo_dir, $test_type, $ova_name"
     setRepoDir(repo_dir)
-    setType(type)
+    setType(test_type)
     if (test_type == "manifest"){
         setManifest(manifest_name, manifest_path)
     } 

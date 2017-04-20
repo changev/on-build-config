@@ -20,7 +20,9 @@ node(){
                 timeout(90){
                     // Start to run test
                     def TESTS = "${env.OVA_POST_TESTS}"
-                    function_test.run(TESTS=TESTS, repo_dir=repo_dir, "ova", ova_name=env.OVA_STASH_NAME, ova_path=env.OVA_PATH)
+                    def OVA_STASH_NAME = "${env.OVA_STASH_NAME}"
+                    def OVA_PATH = "${env.OVA_PATH}"
+                    function_test.run(TESTS, null, null, repo_dir, "ova", OVA_STASH_NAME, OVA_PATH)
                 }
             }
         }
