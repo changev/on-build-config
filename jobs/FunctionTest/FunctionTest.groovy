@@ -13,6 +13,7 @@ String stash_manifest_name
 String stash_manifest_path
 String TESTS
 String TEST_TYPE
+ArrayList<String> RUN_TESTS
 
 def setTests(TESTS){
     this.TESTS = TESTS
@@ -185,7 +186,7 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
 }
 
 def triggerTestsParallely(){
-    def RUN_TESTS=[:]
+    def RUN_TESTS_DICT = [:]
     // TESTS is a checkbox parameter.
     // Its value is a string looks like:
     // CIT,FIT,Install Ubuntu 14.04,Install ESXI 6.0,Install Centos 6.5
@@ -197,18 +198,18 @@ def triggerTestsParallely(){
     for(int i=0;i<tests.size();i++){
         TEST_NAME = tests[i]
         KEY = "$SIGN$TEST_NAME"
-        RUN_TESTS[KEY]=ALL_TESTS[tests[i]]
+        RUN_TESTS_DICT[KEY]=ALL_TESTS[tests[i]]
     }
     def used_resources = []
     def test_branches = [:]
     
-    test_names = RUN_TESTS.keySet() as String[]
-    for(int i=0;i<RUN_TESTS.size();i++){
-        def test_name = test_names[i]
-        def label_name=RUN_TESTS[test_name]["label"]
-        def test_group = RUN_TESTS[test_name]["TEST_GROUP"]
-        def run_fit_test = RUN_TESTS[test_name]["RUN_FIT_TEST"]
-        def run_cit_test = RUN_TESTS[test_name]["RUN_CIT_TEST"]
+    this.RUN_TESTS = RUN_TESTS_DICT.keySet() as String[]
+    for(int i=0;i<RUN_TESTS_DICT.size();i++){
+        def test_name = this.RUN_TESTS[i]
+        def label_name=RUN_TESTS_DICT[test_name]["label"]
+        def test_group = RUN_TESTS_DICT[test_name]["TEST_GROUP"]
+        def run_fit_test = RUN_TESTS_DICT[test_name]["RUN_FIT_TEST"]
+        def run_cit_test = RUN_TESTS_DICT[test_name]["RUN_CIT_TEST"]
         test_branches[test_name] = {
             functionTest(test_name,label_name,test_group, run_fit_test, run_cit_test, used_resources)
         }
@@ -229,7 +230,7 @@ def archiveArtifactsToTarget(target){
         dir("$target"){
             for(int i=0;i<tests.size();i++){
                 try{
-                    def test_name = tests[i]
+                    def test_name = this.RUN_TESTS[i]
                     unstash "$test_name"
                 } catch(error){
                     echo "[WARNING]Caught error during archive artifact of function test: ${error}"
