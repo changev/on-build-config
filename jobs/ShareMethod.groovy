@@ -91,17 +91,6 @@ def buildAndPublish(){
             }
         }
 
-        stage("Publish"){
-            parallel 'Publish Debian':{
-                load("jobs/release/release_debian.groovy")
-            }, 'Publish Vagrant':{
-                load("jobs/release/release_vagrant.groovy")
-            }, 'Publish Docker':{
-                load("jobs/release/release_docker.groovy")
-            }, 'Publish NPM':{
-                load("jobs/release/release_npm.groovy")
-            }
-        }
     }
 }
 
