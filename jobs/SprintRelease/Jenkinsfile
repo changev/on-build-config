@@ -5,7 +5,7 @@ node{
 
     if(TAG == "true"){
         stage("Create Tag"){
-            //load("jobs/SprintRelease/create_tag.groovy")
+            load("jobs/SprintRelease/create_tag.groovy")
         }
     }
 
