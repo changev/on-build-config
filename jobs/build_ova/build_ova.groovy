@@ -24,11 +24,11 @@ node(build_ova_node){ws{
                 def url = "https://github.com/RackHD/RackHD.git"
                 def branch = "${env.RACKHD_COMMIT}"
                 def targetDir = "build"
-                shareMethod.checkout(url, branch, targetDir)
 
                 timeout(180){
                     withEnv(["WORKSPACE=${current_workspace}"]){
-                        sh './Build_OVA_JFiles/jobs/build_ova/build_ova.sh'
+                        sh 'mkdir -p build/docker'
+                        sh 'wget http://10.62.59.175:8080/job/MasterCI/98/artifact/build/packer/rackhd-ubuntu-14.04-2.1.0-20170413UTC.ova -O build/docker/rackhd-ubuntu-14.04-2.1.0-20170413UTC.ova'
                     }
                 }
                 archiveArtifacts 'build/packer/*.ova, build/packer/*.log, build/packer/*.md5, build/packer/*.sha'
