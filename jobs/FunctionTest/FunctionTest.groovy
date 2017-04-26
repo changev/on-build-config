@@ -186,6 +186,7 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
 }
 
 def triggerTestsParallely(){
+    def RUN_TESTS_DICT = [:]
     // TESTS is a checkbox parameter.
     // Its value is a string looks like:
     // CIT,FIT,Install Ubuntu 14.04,Install ESXI 6.0,Install Centos 6.5
