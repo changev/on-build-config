@@ -50,7 +50,7 @@ def buildPackage(String repo_dir){
     int retry_times = 3
     stage("Packages Build"){
         retry(retry_times){
-            load(repo_dir + "/jobs/build_debian/build_debian.groovy")
+            //load(repo_dir + "/jobs/build_debian/build_debian.groovy")
         }
     }
 }
@@ -61,11 +61,11 @@ def buildImages(String repo_dir){
     stage("Images Build"){
         parallel 'vagrant build':{
             retry(retry_times){
-                load(repo_dir + "/jobs/build_vagrant/build_vagrant.groovy")
+                //load(repo_dir + "/jobs/build_vagrant/build_vagrant.groovy")
             }
         }, 'ova build':{
             retry(retry_times){
-                load(repo_dir + "/jobs/build_ova/build_ova.groovy")
+                //load(repo_dir + "/jobs/build_ova/build_ova.groovy")
             }
         }, 'build docker':{
             retry(retry_times){
@@ -76,9 +76,9 @@ def buildImages(String repo_dir){
 
     stage("Post Test"){
         parallel 'vagrant post test':{
-            load(repo_dir + "/jobs/build_vagrant/vagrant_post_test.groovy")
+            //load(repo_dir + "/jobs/build_vagrant/vagrant_post_test.groovy")
         }, 'ova post test loader':{
-            load(repo_dir + "/jobs/build_ova/ova_post_test.groovy")
+            //load(repo_dir + "/jobs/build_ova/ova_post_test.groovy")
         }, 'docker post test loader':{
             load(repo_dir + "/jobs/build_docker/docker_post_test.groovy")
         }
@@ -88,13 +88,13 @@ def buildImages(String repo_dir){
 def publishImages(String repo_dir){
     stage("Publish"){
         parallel 'Publish Debian':{
-            load(repo_dir + "/jobs/release/release_debian.groovy")
+            //load(repo_dir + "/jobs/release/release_debian.groovy")
         }, 'Publish Vagrant':{
-            load(repo_dir + "/jobs/release/release_vagrant.groovy")
+            //load(repo_dir + "/jobs/release/release_vagrant.groovy")
         }, 'Publish Docker':{
             load(repo_dir + "/jobs/release/release_docker.groovy")
         }, 'Publish NPM':{
-            load(repo_dir + "/jobs/release/release_npm.groovy")
+            //load(repo_dir + "/jobs/release/release_npm.groovy")
         }
     }
 }
