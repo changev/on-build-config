@@ -108,11 +108,16 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
                                         def url = "https://github.com/changev/RackHD.git"
                                         def branch = "enhance/auth-case-no-ssh"
                                         def targetDir = "RackHD"
-                                        env.RackHD_DIR = targetDir
+                                        //env.RackHD_DIR = targetDir
                                         shareMethod.checkout(url, branch, targetDir)
                                     }
                                 }
 
+                                def url = "https://github.com/changev/RackHD.git"
+                                def branch = "bugfix/docker-dhcp-dns"
+                                def targetDir = "RackHD_DOCKER"
+                                env.RackHD_DIR = targetDir
+                                shareMethod.checkout(url, branch, targetDir)
                                 // Pre-process assistant test scripts
                                 sh '''#!/bin/bash -x
                                 pushd build-config
