@@ -88,7 +88,7 @@ cleanupDocker(){
   echo "Stop & rm all docker running containers " 
   clean_running_containers
   echo "Chown rackhd/files volume on hosts"
-  echo $SUDO_PASSWORD |sudo -S chown -R $USER:$USER $WORKSPACE/RackHD 
+  echo $SUDO_PASSWORD |sudo -S chown -R $USER:$USER $RackHD_DIR 
   echo "Clean Up all docker images in local repo"
   clean_up_docker_image none
   # clean images by order, on-core should be last one because others depends on it
