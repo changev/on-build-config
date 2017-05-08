@@ -11,7 +11,7 @@ while read -r LINE; do
         echo $LINE
         for repo_tag in $LINE; do
                 echo "Pushing rackhd/$repo_tag"
-        docker push rackhd/$repo_tag
+        docker push $repo_tag
         if [ $? != 0 ]; then
                 echo "Failed to push rackhd/$repo_tag"
             exit 1
