@@ -4,7 +4,7 @@ set -e
 # docker service running and docker have already logged with Rackhd Dockerhub ID,
 #     cmd 'docker login', if not logged then can't push images to dockerhub
 cd DOCKER
-docker -i load $DOCKER_STASH_PATH
+docker load -i $DOCKER_STASH_PATH
 docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
 
 while read -r LINE; do
