@@ -30,7 +30,7 @@ popd
 
 cd $RackHD_DIR/docker
 # replace default config json with the one which is for test.
-cp -f ${WORKSPACE}/build-config/vagrant/config/docker/config.json ./monorail/config.json
+cp -f ${WORKSPACE}/build-config/vagrant/config/mongo/config.json ./monorail/config.json
 #if clone file name is not repo name, this scirpt should be edited.
 for repo_tag in $image_list; do
     repo=${repo_tag%:*}
