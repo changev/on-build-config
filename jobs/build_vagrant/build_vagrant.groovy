@@ -54,6 +54,8 @@ lock("vagrant_build"){
                     archiveArtifacts 'build/packer/*.box, build/packer/*.log'
                     stash name: 'vagrant', includes: 'build/packer/*.box'
                     env.VAGRANT_WORKSPACE="${current_workspace}"
+                    env.VAGRANT_STASH_NAME = "vagrant"
+                    env.VAGRANT_STASH_PATH = "build/packer/*.box"
                     echo "${env.VAGRANT_WORKSPACE}"
                 }
             }

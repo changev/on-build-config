@@ -29,6 +29,10 @@ def setOVA(String ova_stash_name, String ova_stash_path){
     this.ova_stash_name = ova_stash_name
     this.ova_stash_path = ova_stash_path
 }
+def setVagrant(String vagrant_stash_name, String vagrant_stash_path){
+    this.vagrant_stash_name = vagrant_stash_name
+    this.vagrant_stash_path = vagrant_stash_path
+}
 def setDocker(String docker_stash_name, String docker_stash_path, String docker_record_stash_path){
     this.docker_stash_name = docker_stash_name
     this.docker_stash_path = docker_stash_path
@@ -136,6 +140,13 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
                                     env.DOCKER_PATH = "$docker_stash_path"
                                     env.DOCKER_RECORD_PATH = "$docker_record_stash_path"
                                     sh './build-config/jobs/build_docker/prepare_docker_post_test.sh'
+                                }
+
+                                if(test_type == "vagrant"){
+                                    // env vars in this sh are defined in jobs/build_ova/ova_post_test.groovy
+                                    unstash "$vagrant_stash_name"
+                                    env.VAGRANT_STASH_PATH = "$vagrant_stash_path"
+                                    sh './build-config/jobs/build_vagrant/prepare_vagrant_post_test.sh'
                                 }
 
                                 // Run smoke test
@@ -321,6 +332,11 @@ def dockerPostTest(TESTS, docker_stash_name, docker_stash_path, docker_record_st
 
 def ovaPostTest(TESTS, ova_stash_name, ova_stash_path, repo_dir, test_type){
     setOVA(ova_stash_name, ova_stash_path)
+    runTest(TESTS, test_type, repo_dir)
+}
+
+def vagrantPostTest(TESTS, vagrant_stash_name, vagrant_stash_path, repo_dir, test_type){
+    setVagrant(vagrant_stash_name, vagrant_stash_path)
     runTest(TESTS, test_type, repo_dir)
 }
 

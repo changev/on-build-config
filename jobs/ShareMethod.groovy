@@ -75,7 +75,7 @@ def buildImages(String repo_dir){
     }
 
     stage("Post Test"){
-        parallel 'vagrant post test':{
+        parallel 'vagrant post test loader':{
             load(repo_dir + "/jobs/build_vagrant/vagrant_post_test.groovy")
         }, 'ova post test loader':{
             load(repo_dir + "/jobs/build_ova/ova_post_test.groovy")
