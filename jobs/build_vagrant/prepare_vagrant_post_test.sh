@@ -10,4 +10,5 @@ CONFIG_PATH=`readlink -f build-config/vagrant/config/mongo/`
 # Make sure this path is synced with cleanup.sh
 WORKSPACE=`pwd`
 cd $RackHD_DIR/example
-CONFIG_DIR=${CONFIG_PATH} WORKSPACE=${WORKSPACE} vagrant up --provision
+BUILD_ID=dontKillMe CONFIG_DIR=${CONFIG_PATH} WORKSPACE=${WORKSPACE} vagrant up --provision
+

@@ -41,15 +41,15 @@ node{
             try{
                 stage("Unit Test"){
                     // Call the function runTest to run unit test
-                    unit_test.runTest(env.stash_manifest_name, env.stash_manifest_path, repo_dir)
+                    //unit_test.runTest(env.stash_manifest_name, env.stash_manifest_path, repo_dir)
                 }
                 stage("Function Test"){
                     // Call the function run to run function test
-                    function_test.manifestTest(TESTS, env.stash_manifest_name, env.stash_manifest_path, repo_dir, test_type)
+                    //function_test.manifestTest(TESTS, env.stash_manifest_name, env.stash_manifest_path, repo_dir, test_type)
                 }
             } finally{
-                unit_test.archiveArtifactsToTarget("UnitTest")
-                function_test.archiveArtifactsToTarget("FunctionTest", TESTS, test_type)
+                //unit_test.archiveArtifactsToTarget("UnitTest")
+                //function_test.archiveArtifactsToTarget("FunctionTest", TESTS, test_type)
             }
             Boolean create_tag = false
             Boolean publish = PUBLISH.toBoolean()

@@ -7,8 +7,8 @@ node{
 }
 
 
-lock("vagrant_build"){
-    String label_name = "packer_vagrant"
+lock("test"){
+    String label_name = "smoke_test"
     lock(label:label_name,quantity:1){
         resources_name = shareMethod.getLockedResourceName(label_name)
         if(resources_name.size>0){
@@ -40,7 +40,7 @@ lock("vagrant_build"){
                     def url = "https://github.com/RackHD/RackHD.git"
                     def branch = "${env.RACKHD_COMMIT}"
                     def targetDir = "build"
-                    shareMethod.checkout(url, branch, targetDir)
+                    //shareMethod.checkout(url, branch, targetDir)
                 
                     step ([$class: 'CopyArtifact',
                     projectName: 'VAGRANT_CACHE_BUILD',
@@ -48,7 +48,7 @@ lock("vagrant_build"){
                     
                     timeout(180){
                         withEnv(["WORKSPACE=${current_workspace}"]){
-                            sh './on-build-config/jobs/build_vagrant/build_vagrant.sh'
+                            sh 'mkdir -p build/packer && cd build/packer && wget http://10.240.19.21/job/Z-MC-V-PP/1/artifact/build/packer/rackhd-ubuntu-14.04-2.6.0-20170521UTC.box'
                         }
                     }
                     archiveArtifacts 'build/packer/*.box, build/packer/*.log'

@@ -310,7 +310,7 @@ portForwarding(){
     echo "22->2222"
 }
 
-fetchOVALog(){
+fetchRackHDLog(){
     ansible_workspace=${WORKSPACE}/build-config/jobs/build_ova/ansible
     # fetch rackhd log
     pushd $ansible_workspace
@@ -355,7 +355,7 @@ if [ "$RUN_CIT_TEST" == true ] || [ "$RUN_FIT_TEST" == true ] ; then
 
     # Remedial work
     # Specific remedial work
-    fetchOVALog
+    fetchRackHDLog
 
     # Clean Up below
 
@@ -412,6 +412,8 @@ if [ "$RUN_CIT_TEST" == true ] || [ "$RUN_FIT_TEST" == true ] ; then
     generateSolLog
     # Run tests
     runTests
+    deactivate
+    fetchRackHDLog
     generateSysLog
 
     # Clean Up below

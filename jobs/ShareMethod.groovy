@@ -65,11 +65,11 @@ def buildImages(String repo_dir){
             }
         }, 'ova build':{
             retry(retry_times){
-                load(repo_dir + "/jobs/build_ova/build_ova.groovy")
+                //load(repo_dir + "/jobs/build_ova/build_ova.groovy")
             }
         }, 'build docker':{
             retry(retry_times){
-                load(repo_dir + "/jobs/build_docker/build_docker.groovy")
+                //load(repo_dir + "/jobs/build_docker/build_docker.groovy")
             }
         }
     }
@@ -78,9 +78,9 @@ def buildImages(String repo_dir){
         parallel 'vagrant post test loader':{
             load(repo_dir + "/jobs/build_vagrant/vagrant_post_test.groovy")
         }, 'ova post test loader':{
-            load(repo_dir + "/jobs/build_ova/ova_post_test.groovy")
+            //load(repo_dir + "/jobs/build_ova/ova_post_test.groovy")
         }, 'docker post test loader':{
-            load(repo_dir + "/jobs/build_docker/docker_post_test.groovy")
+            //load(repo_dir + "/jobs/build_docker/docker_post_test.groovy")
         }
     }
 }
@@ -106,7 +106,7 @@ def createTag(String repo_dir){
 }
 
 def buildAndPublish(Boolean publish, Boolean tag, String repo_dir){
-    buildPackage(repo_dir)
+    //buildPackage(repo_dir)
 
     buildImages(repo_dir)
 
