@@ -41,7 +41,7 @@ def functionTest(String test_name, String label_name, String TEST_GROUP, Boolean
         // Occupy an avaliable resource which contains the label
         String node_name = shareMethod.occupyAvailableLockedResource(label_name, this.used_resources)
         try{
-            node(node_name){
+            node("vmslave13"){
                 deleteDir()
                 dir("build-config"){
                     checkout scm
