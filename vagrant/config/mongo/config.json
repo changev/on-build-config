@@ -42,7 +42,7 @@
     "httpFileServiceType": "FileSystem",
     "httpProxies": [{
         "localPath": "/repo/",
-        "server": "http://10.240.19.193",
+        "server": "http://10.62.59.169",
         "remotePath": "/repo/"
     }],
     "httpStaticRoot": "/opt/monorail/static/http",
