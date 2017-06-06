@@ -25,7 +25,13 @@ node(){
                     def OVA_STASH_PATH = "${env.OVA_PATH}"
                     function_test.ovaPostTest(TESTS, OVA_STASH_NAME, OVA_STASH_PATH, repo_dir, test_type)
                 }
-            }finally{
+            }
+            catch(error){
+                echo "Caught: ${error}"
+                currentBuild.result = "FAILURE"
+                throw error
+            }
+            finally{
                 function_test.archiveArtifactsToTarget("OVA_POST_TEST", TESTS, test_type)
             }
         }

@@ -16,7 +16,13 @@ node{
                     def DOCKER_RECORD_STASH_PATH = "${env.DOCKER_RECORD_STASH_PATH}"
                     function_test.dockerPostTest(TESTS, DOCKER_STASH_NAME, DOCKER_STASH_PATH, DOCKER_RECORD_STASH_PATH, repo_dir, test_type)
                 }
-            } finally{
+            } 
+            catch(error){
+                echo "Caught: ${error}"
+                currentBuild.result = "FAILURE"
+                throw error
+            }
+            finally{
                 function_test.archiveArtifactsToTarget("DOCKER_POST_SMOKE_TEST", TESTS, test_type)
             }
     }
