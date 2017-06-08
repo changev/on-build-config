@@ -9,8 +9,6 @@
     - install-package-for-ci
     - install-vagrant-stack
     - install-python-tools
-    - mount-isofarm
-    - setup-static-file-server
     - fix-apt-dependency
     - install-docker
     - install-ansible
