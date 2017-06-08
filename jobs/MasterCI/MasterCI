@@ -18,12 +18,9 @@ node{
         checkout scm
         def shareMethod = load("jobs/ShareMethod.groovy")
         try{
-            try {
                 build job: env.MERGE_FREEZER_TRIGGER, parameters: [[$class: 'StringParameterValue', name: 'MANUAL', value:"false"],[$class: 'BooleanParameterValue', name: 'FREEZE_OR_UNFREEZE', value:false]]
-            } catch (error){
-                echo "Failed to trigger merge freezer!"
-            }
         } catch(error){
+            echp "$error"
             // trigger freeze procedure
             build job: env.MERGE_FREEZER_TRIGGER, parameters: [[$class: 'StringParameterValue', name: 'MANUAL', value:"false"],[$class: 'BooleanParameterValue', name: 'FREEZE_OR_UNFREEZE', value:true]]
         } finally{
