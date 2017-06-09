@@ -76,10 +76,10 @@ configOVA() {
   pushd ${WORKSPACE}/build-config/jobs/build_ova/ansible
     echo "ova-post-test ansible_host=$OVA_INTERNAL_IP ansible_user=$OVA_USER ansible_ssh_pass=$OVA_PASSWORD ansible_become_pass=$OVA_PASSWORD" > hosts
     cp -f ${WORKSPACE}/build-config/vagrant/config/mongo/config.json .
-    ansible-playbook -i hosts main.yml --tags "before-test"
     if [ -z "${External_vSwitch}" ]; then
       ansible-playbook -i hosts main.yml --extra-vars "ova_gateway=$OVA_GATEWAY ova_net_interface=$OVA_NET_INTERFACE" --tags "config-gateway"
     fi
+    ansible-playbook -i hosts main.yml --tags "before-test"
   popd
 }
 

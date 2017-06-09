@@ -39,6 +39,7 @@ def unitTest(repo_name, used_resources){
                 }
                 unstash "$stash_manifest_name"
                 env.MANIFEST_FILE_PATH = "$stash_manifest_path"
+                env.SUDO_PASSWORD="Zilog256"
                 timeout(30){
                     try{
                         sh "./build-config/jobs/UnitTest/unit_test.sh ${repo_name}"
