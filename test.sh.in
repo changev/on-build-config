@@ -159,6 +159,9 @@ vagrantSuspendAll() {
 }
 
 CONFIG_PATH=${CONFIG_PATH-build-config/vagrant/config/mongo}
+if [ -n "$RACKHD_CONFIG_FILE_URL" ]; then
+  wget --tries=3 $RACKHD_CONFIG_FILE_URL -O ${CONFIG_PATH}/config.json
+fi
 vagrantUp() {
   cd ${WORKSPACE}/RackHD/example
   cp -rf ${WORKSPACE}/build-config/vagrant/* .
@@ -333,7 +336,9 @@ portForwarding(){
     socat TCP4-LISTEN:9092,forever,reuseaddr,fork TCP4:$1:9080 &
     socat TCP4-LISTEN:9093,forever,reuseaddr,fork TCP4:$1:8443 &
     socat TCP4-LISTEN:2222,forever,reuseaddr,fork TCP4:$1:22 &
-    socat TCP4-LISTEN:7080,forever,reuseaddr,fork TCP4:$1:7080 &
+    if [ "$1" != "localhost" ]; then
+        socat TCP4-LISTEN:7080,forever,reuseaddr,fork TCP4:$1:7080 &
+    fi
     socat TCP4-LISTEN:37017,forever,reuseaddr,fork TCP4:$1:27017 &
     echo "Finished ova -> localhost port forwarding"
     echo "5672->9091"
