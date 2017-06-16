@@ -38,7 +38,7 @@ lock("ova_build"){
                         checkout scm
                     }
                     def url = "https://github.com/RackHD/RackHD.git"
-                    def branch = "${env.RACKHD_COMMIT}"
+                    def branch = "master"
                     def targetDir = "build"
                     shareMethod.checkout(url, branch, targetDir)
                     // Test jenkins server doesn't use OVA cache build 
