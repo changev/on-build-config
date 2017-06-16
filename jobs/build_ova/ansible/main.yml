@@ -30,9 +30,8 @@
 
     - name: Restart rackhd
       become: yes
-      service: 
-        name: rackhd
-        state: restarted
+      shell: |
+        service rackhd restart
       tags:
         - before-test
       
