@@ -15,6 +15,13 @@
       tags:
         - before-test
 
+    - name: stop rackhd
+      become: yes
+      shell: |
+        service rackhd stop
+      tags:
+        - before-test
+
     - name: Clean rackhd log
       become: yes
       shell: |
