@@ -28,3 +28,4 @@ lock(label:label_name,quantity:1){
         }
     }
 }
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*",ATTR{address}=="00:0c:29:b7:29:66", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth1", NAME="em1"

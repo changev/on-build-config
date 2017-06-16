@@ -49,7 +49,8 @@ lock("ova_build"){
                     }
                     timeout(180){
                         withEnv(["WORKSPACE=${current_workspace}"]){
-                            sh './on-build-config/jobs/build_ova/build_ova.sh'
+                        sh 'mkdir -p build/packer'
+                        sh 'cd build/packer && wget http://10.62.59.175:8080/job/Master-CI-RAC-4783/402/artifact/build/packer/rackhd-ubuntu-14.04-2.9.0-20170615UTC.ova'
                         }
                     }
                     archiveArtifacts 'build/packer/*.ova, build/packer/*.log, build/packer/*.md5, build/packer/*.sha'

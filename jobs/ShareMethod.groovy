@@ -50,7 +50,7 @@ def buildPackage(String repo_dir){
     int retry_times = 3
     stage("Packages Build"){
         retry(retry_times){
-            load(repo_dir + "/jobs/build_debian/build_debian.groovy")
+            //load(repo_dir + "/jobs/build_debian/build_debian.groovy")
         }
     }
 }
@@ -85,7 +85,7 @@ def buildImages(String repo_dir){
     stage("Images Build"){
         parallel 'vagrant build':{
             retry(retry_times){
-                buildVagrant(repo_dir)
+                //buildVagrant(repo_dir)
             }
         }, 'ova build':{
             retry(retry_times){
@@ -93,18 +93,18 @@ def buildImages(String repo_dir){
             }
         }, 'build docker':{
             retry(retry_times){
-                buildDocker(repo_dir)
+                //buildDocker(repo_dir)
             }
         }
     }
 
     stage("Post Test"){
         parallel 'vagrant post test':{
-            testVagrant(repo_dir)
+            //testVagrant(repo_dir)
         }, 'ova post test loader':{
             testOVA(repo_dir)
         }, 'docker post test loader':{
-            testDocker(repo_dir)
+            //testDocker(repo_dir)
         }
     }
 }
