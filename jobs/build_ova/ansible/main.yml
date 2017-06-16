@@ -34,14 +34,6 @@
         service rackhd restart
       tags:
         - before-test
-      
-    - name: Restart rackhd
-      become: yes
-      shell: |
-        service rackhd restart
-      tags:
-        - before-test
-
     - name: Gather rackhd log
       become: yes
       fetch:
