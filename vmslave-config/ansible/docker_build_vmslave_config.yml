@@ -1,8 +1,4 @@
 ---
 - hosts: docker
   roles:
-    - aptget-update
-    - for-jenkins-connection
-    - install-fundamental-tools
-    - install-docker
-    - install-python-tools
+    - intif-as-gateway 

@@ -88,3 +88,7 @@
   args:
     executable: /bin/sh
 
+- name: docker need ufw disable
+  become: yes
+  shell: |
+    ufw disable
