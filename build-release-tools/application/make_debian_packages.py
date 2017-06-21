@@ -344,6 +344,7 @@ def main():
     all_repos = get_build_repos(args.build_directory)
     package_not_exist = create_packages_filter(bintray, artifactory, args.artifactory_repo, args.build_directory, args.is_official_release)
     package_need_build_repos = filter(package_not_exist, all_repos)
+    package_need_build_repos.append('RackHD') # always rebuild rackhd.deb whenever cache hit or not. because any of on-xxx.deb change will require rackhd.deb being rebuild
     for r in package_need_build_repos:
         print "[Info] Repo {0} will run deb-build ".format( r )
 
