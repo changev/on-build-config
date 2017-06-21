@@ -6,7 +6,6 @@
         ip route add default via {{ ova_gateway }} dev {{ ova_net_interface }}
       tags:
         - config-gateway
-      ignore_errors: yes
 
     - name: Copy rackhd config for test
       become: yes
