@@ -92,3 +92,5 @@
   become: yes
   shell: |
     ufw disable
+    docker pull mongo
+    docker pull rabbitmq:management
