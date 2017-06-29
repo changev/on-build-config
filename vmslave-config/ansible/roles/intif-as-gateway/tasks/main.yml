@@ -92,5 +92,5 @@
   become: yes
   shell: |
     ufw disable
-    docker pull mongo
-    docker pull rabbitmq:management
+    wget http://10.62.59.175:8080/job/Tools/job/docker-source/lastSuccessfulBuild/artifact/rackhd-docker-dep.tar
+    docker load -i rackhd-docker-dep.tar
