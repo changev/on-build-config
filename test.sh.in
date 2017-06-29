@@ -284,6 +284,10 @@ fetchOVALog(){
 }
 
 dockerUp(){
+    if [ -n "$EXTRA_DOCKER_IMAGES" ];then
+      wget $EXTRA_DOCKER_IMAGES -O extra_docker_images.tar -q
+      docker load -i extra_docker_images.tar
+    fi
     pushd $WORKSPACE
     echo $SUDO_PASSWORD |sudo -S docker load -i rackhd_pipeline_docker.tar
     popd
