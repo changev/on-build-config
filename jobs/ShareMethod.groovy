@@ -89,15 +89,12 @@ def buildImages(String repo_dir){
     stage("Images Build"){
         parallel 'vagrant build':{
             retry(retry_times){
-                buildVagrant(repo_dir)
             }
         }, 'ova build':{
             retry(retry_times){
-                buildOVA(repo_dir)
             }
         }, 'build docker':{
             retry(retry_times){
-                buildDocker(repo_dir)
             }
         }
     }
@@ -162,7 +159,6 @@ def createTag(String repo_dir){
 }
 
 def buildAndPublish(Boolean publish, Boolean tag, String repo_dir){
-    buildPackage(repo_dir)
 
     buildImages(repo_dir)
 
