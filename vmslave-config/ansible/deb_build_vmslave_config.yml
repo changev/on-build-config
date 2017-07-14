@@ -5,6 +5,7 @@
     - for-jenkins-connection
     - install-fundamental-tools
     - install-package-for-build
+    - install-package-for-deb-build
     - install-rackhd-dependency
     - install-python-tools
     - install-ansible

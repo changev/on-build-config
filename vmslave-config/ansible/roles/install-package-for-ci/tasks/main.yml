@@ -5,6 +5,9 @@
     - openjdk-7-jdk
     - maven
     - socat
+    - chromium-browser
+    - firefox
+    - xvfb
 
 - name: Check if ovftool is installed
   shell: |

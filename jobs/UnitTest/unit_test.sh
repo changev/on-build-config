@@ -33,6 +33,19 @@ unit_test(){
     npm install
 
     set +e
+    # exceptions should be add here
+
+    # 1st exception on-web-ui, default karma config will generated a test/on-web-ui.xml
+    # depends on chromium-browser, firefor and xvfb
+    if [ "$1" == "on-web-ui" ]; then
+        export CHROME_BIN=chromium-browser
+        xvfb-run ./node_modules/.bin/karma start test/karma.conf.js
+        return $?
+    fi
+    # on-web-ui ends
+
+    # exceptions ends
+
     ./node_modules/.bin/istanbul report lcov
     npm install --save-dev mocha-sonar-reporter
     npm_package_config_mocha_sonar_reporter_classname="Tests_build.spec" npm_package_config_mocha_sonar_reporter_outputfile=test/$1.xml ./node_modules/.bin/istanbul cover -x "**/spec/**" ./node_modules/.bin/_mocha -- $(find spec -name '*-spec.js') -R mocha-sonar-reporter --require spec/helper.js -t 10000

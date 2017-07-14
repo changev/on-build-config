@@ -2,7 +2,8 @@
 sources_list_url: "{{ lookup('env','SOURCES_LIST_URL') }}"
 
 #Versions
-node_version: "{{ lookup('env','SLAVE_NODE_VERSION') | default('4.7.3') }}"
+node_4_version: "{{ lookup('env','SLAVE_NODE_4_VERSION') | default('4.7.3') }}"
+node_6_version: "{{ lookup('env','SLAVE_NODE_6_VERSION') | default('6.10.0') }}"
 rabbitmq_version: "{{ lookup('env','SLAVE_RABBITMQ_VERSION') | default('3.2.4-1') }}"
 mongodb_version: "{{ lookup('env','SLAVE_MONGODB_VERSION') | default('1:2.4.9-1ubuntu2') }}"
 nvm_install_script: "{{ lookup('env', 'NVM_INSTALL_SCRIPT') | default('https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh') }}"
