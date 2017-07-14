@@ -15,7 +15,7 @@
 - name: Install node if it's not installed
   become: yes
   shell: |
-    . ~/.nvm/nvm.sh && nvm install v"{{ node_version }}"
+    . ~/.nvm/nvm.sh && nvm install v"{{ node_4_version }}" && nvm install v"{{ node_6_version }}" && nvm use 6
 
 - name: Install ucs-service deps
   become: true

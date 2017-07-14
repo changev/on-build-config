@@ -2,7 +2,8 @@
 sources_list_url: http://**.**.**.***/static/misc/sources.list
 
 #Versions
-node_version: 4.7.3
+node_4_version: 4.7.3
+node_6_version: 6.10.0
 rabbitmq_version: 3.2.4-1
 mongodb_version: 2.4.9
 ipmitool_version: 1.8.13
@@ -10,8 +11,8 @@ slave_ansible_version: 2.3.0.0
 pip_version: 9.0.1
 virtualenv_version: 14.0.0
 docker_version: 17.03.1-ce
+nvm_install_script: https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh
 
 #Jenkins Master IP
 master_ip: **.**.**.**
 
-nvm_install_script: https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh
