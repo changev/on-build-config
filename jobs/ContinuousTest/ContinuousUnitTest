@@ -56,7 +56,6 @@ node{
                 }
                 Boolean create_tag = false
                 Boolean publish = PUBLISH.toBoolean()
-                shareMethod.buildAndPublish(publish, create_tag, repo_dir)
                 currentBuild.result="SUCCESS"
             } finally{
             }
