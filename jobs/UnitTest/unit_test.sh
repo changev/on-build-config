@@ -31,6 +31,7 @@ prepare_deps(){
 unit_test(){
     echo "Run unit test under $1"
     npm install
+    set +e
     npm install --save-dev mocha-sonar-reporter
 
     if [ "$1" == "on-core" ];then
@@ -41,7 +42,6 @@ unit_test(){
     return $?
    fi
 
-    set +e
     ./node_modules/.bin/istanbul report lcov
     npm_package_config_mocha_sonar_reporter_classname="Tests_build.spec" npm_package_config_mocha_sonar_reporter_outputfile=test/$1.xml ./node_modules/.bin/istanbul cover -x "**/spec/**" ./node_modules/.bin/_mocha -- $(find spec -name '*-spec.js') -R mocha-sonar-reporter --require spec/helper.js -t 10000
     set -e
