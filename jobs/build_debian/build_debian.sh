@@ -5,7 +5,8 @@ pushd $WORKSPACE
 LOCAL_BUILD_DIR=b
 echo "using Artifactory: " $ARTIFACTORY_URL
 
-curl --user $BINTRAY_CREDS -L "$MANIFEST_FILE_URL" -o rackhd-manifest
+#curl --user $BINTRAY_CREDS -L "$MANIFEST_FILE_URL" -o rackhd-manifest
+wget $MANIFEST_FILE_URL -O rackhd-manifest
 ./on-build-config/build-release-tools/HWIMO-BUILD on-build-config/build-release-tools/application/make_debian_packages.py \
 --build-directory $LOCAL_BUILD_DIR \
 --manifest-file  rackhd-manifest \

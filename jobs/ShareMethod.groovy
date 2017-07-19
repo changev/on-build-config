@@ -196,7 +196,8 @@ def downloadManifest(String url, String target){
             passwordVariable: 'BINTRAY_API_KEY',
             usernameVariable: 'BINTRAY_USERNAME')
     ]){
-        sh 'curl --user $BINTRAY_USERNAME:$BINTRAY_API_KEY --retry 5 --retry-delay 5 ' + "$url" + ' -o ' + "${target}"
+        //sh 'curl --user $BINTRAY_USERNAME:$BINTRAY_API_KEY --retry 5 --retry-delay 5 ' + "$url" + ' -o ' + "${target}"
+        sh 'wget ' + "$url" + ' -O ' + "${target}"
     }
 }
 
