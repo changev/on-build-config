@@ -85,6 +85,10 @@ def parse_command_line(args):
                         default=1,
                         help="Number of parallel jobs to run",
                         type=int)
+    
+    parser.add_argument("--template",
+                    default="manifest.json",
+                    help="Manifest template name, which stored in lib directory.")
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -114,16 +118,16 @@ def main():
             if args.date == "current":
                 utc_now = datetime.utcnow()
                 day_str = utc_now.strftime("%Y%m%d")
-                dest_manifest = "{branch}-{day}".format(branch=slice_branch, day=day_str)
-                generator = ManifestGenerator(dest_manifest, args.branch, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force)
+                dest_manifest = "{template}-{branch}-{day}".format(type=args.template, branch=slice_branch, day=day_str)
+                generator = ManifestGenerator(dest_manifest, args.branch, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force, type=args.template)
             else:
                 dt = convert_date(args.date)
                 day_str = dt.strftime("%Y%m%d")
-                dest_manifest = "{branch}-{day}".format(branch=slice_branch, day=day_str)
+                dest_manifest = "{template}-{branch}-{day}".format(template=args.template, branch=slice_branch, day=day_str)
                 date_str = "{0} {1}".format(dt.strftime("%Y-%m-%d %H:%M:%S"), args.timezone)
-                generator = SpecifyDayManifestGenerator(dest_manifest, args.branch, date_str, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force)
+                generator = SpecifyDayManifestGenerator(dest_manifest, args.branch, date_str, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force, template=args.template)
         else:
-            generator = ExistDirManifestGenerator(dest_manifest, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force)
+            generator = ExistDirManifestGenerator(dest_manifest, args.builddir, git_credential=args.git_credential, jobs=args.jobs, force=args.force, template=args.template)
 
         generator.update_manifest()
         generator.generate_manifest()

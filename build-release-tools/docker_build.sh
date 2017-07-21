@@ -1,6 +1,6 @@
 #!/bin/bash 
 set -e
-
+set -x
 #
 # This script is for build/push rackhd docker images.
 # Environmental requirement:
@@ -18,6 +18,8 @@ WORKDIR=${WORKDIR:=$(dirname $(dirname $BASEDIR))}
 
 IS_OFFICIAL_RELEASE=${2}
 IS_OFFICIAL_RELEASE=${IS_OFFICIAL_RELEASE:=false}
+
+REPOS=${3}
 
 BUILD_NIGHTLY=false
 BUILD_LATEST=false
@@ -50,7 +52,7 @@ doBuild() {
     # List order is important, on-tasks image build is based on on-core image, 
     # on-http and on-taskgraph ard based on on-tasks image 
     # others are based on on-core image
-    repos=$(echo "on-imagebuilder on-core on-syslog on-dhcp-proxy on-tftp on-wss on-statsd on-tasks on-taskgraph on-http")
+    repos=$REPOS
     #Record all repo:tag for post-pushing
     repos_tags=""
     #Set an empty TAG before each build
@@ -78,7 +80,9 @@ doBuild() {
             echo "Building rackhd/$repo$TAG"
             repos_tags=$repos_tags"rackhd/"$repo$TAG" "
             cp Dockerfile ../Dockerfile.bak
-            if [ "$repo" == "on-imagebuilder" ]; then
+            if [ "$repo" == "on-web-ui" ]; then
+                    docker build -t rackhd/$repo$TAG .
+            elif [ "$repo" == "on-imagebuilder" ]; then
                     cp ${commitstring_file} ./common/
                     docker build -t rackhd/files$TAG .
                     repos_tags="rackhd/files"$TAG" "
@@ -110,10 +114,12 @@ doBuild() {
 # Build begins
 pushd $WORKDIR
 
-pushd RackHD
-    #get rackhd changelog Version
-    RACKHD_CHANGELOG_VERSION=$(dpkg-parsechangelog --show-field Version)
-popd
+if [ -d "RackHD" ]; then
+    pushd RackHD
+        #get rackhd changelog Version
+        RACKHD_CHANGELOG_VERSION=$(dpkg-parsechangelog --show-field Version)
+    popd
+fi
 
 #record all image:tag of each build
 if [ -f build_record ];then

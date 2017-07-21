@@ -51,7 +51,8 @@
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/RackHD/RackHD.git"
+            "repository": "https://github.com/RackHD/RackHD.git",
+            "dependency": ["on-http", "on-taskgraph", "on-tftp", "on-dhcp-proxy", "on-syslog", "on-imagebuilder"]
         }, 
         {
             "branch": "", 
@@ -61,17 +62,7 @@
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/RackHD/on-wss.git"
-        },
-        {
-            "branch": "", 
-            "commit-id": "",
             "repository": "https://github.com/RackHD/on-statsd.git"
-        },
-        {
-            "branch": "",
-            "commit-id": "",
-            "repository": "https://github.com/RackHD/on-web-ui.git"
         }
     ]
 }
