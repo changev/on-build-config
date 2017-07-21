@@ -19,7 +19,7 @@ except ImportError as import_err:
     sys.exit(1)
 
 class ManifestGenerator(object):
-    def __init__(self, dest, branch, builddir, git_credential=None, force=False, jobs=1):
+    def __init__(self, dest, branch, builddir, git_credential=None, force=False, jobs=1, template="manifest.json"):
         """
         Generate a new manifest according to the manifest sample: manifest.json
 
@@ -35,7 +35,7 @@ class ManifestGenerator(object):
         self._builddir = builddir
         self._force = force
         self._jobs = jobs
-        self._manifest = Manifest.instance_of_sample()
+        self._manifest = Manifest.instance_of_sample(template)
         self.repo_operator = RepoOperator(git_credential)
         self.check_builddir()
 
@@ -114,12 +114,12 @@ class ManifestGenerator(object):
                 raise RuntimeError("The file {0} already exist . \n \
                                     If you want to overrite the file, please specify --force."
                                     .format(dest_file))
-
+                                    
         with open(self._dest_manifest_file, 'w') as fp:
             json.dump(self._manifest.manifest, fp, indent=4, sort_keys=True)
 
 class SpecifyDayManifestGenerator(ManifestGenerator):
-    def __init__(self, dest, branch, date, builddir, git_credential=None, force=False, jobs=1):
+    def __init__(self, dest, branch, date, builddir, git_credential=None, force=False, jobs=1, template="manifest.json"):
         self._date = date
         self._jenkins_author = config.gitbit_identity["username"]
         super(SpecifyDayManifestGenerator, self).__init__(dest, branch, builddir, git_credential=git_credential, force=force, jobs=jobs)
@@ -144,13 +144,13 @@ class SpecifyDayManifestGenerator(ManifestGenerator):
                 repo["commit-id"] = newer_commit
 
 class ExistDirManifestGenerator(ManifestGenerator):
-    def __init__(self, dest, builddir, git_credential=None, force=False, jobs=1):
+    def __init__(self, dest, builddir, git_credential=None, force=False, jobs=1, template="manifest.json"):
         self._jenkins_author = config.gitbit_identity["username"]
         self._dest_manifest_file = dest
         self._builddir = builddir
         self._force = force
         self._jobs = jobs
-        self._manifest = Manifest.instance_of_sample()
+        self._manifest = Manifest.instance_of_sample(template)
         self.repo_operator = RepoOperator(git_credential)
         self.check_builddir()
 

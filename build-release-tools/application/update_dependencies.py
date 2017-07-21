@@ -127,16 +127,17 @@ class RackhdDebianControlUpdater(object):
 
         return version_dict
 
-    def update_RackHD_control(self):
+    def update_control(self, target_repo_list):
         """
         udpate RackHD/debian/control according to manifest
         :return: None     
         """
         try:
-            rackhd_dir = os.path.join(self._builddir, "RackHD")
-            debian_dir = os.path.join(rackhd_dir, "debian")
             version_dict = self._generate_version_dict()
-            self._update_dependency(debian_dir, version_dict)
+            for repo in target_repo_list:
+                repo_dir = os.path.join(self._builddir, repo)
+                debian_dir = os.path.join(repo_dir, "debian")
+                self._update_dependency(debian_dir, version_dict)
         except Exception, e:
             print "Failed to update RackHD/debian/control due to {0}".format(e)
             sys.exit(1)
