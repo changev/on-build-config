@@ -1,14 +1,20 @@
 #!/bin/bash -ex
+
+if [  -z "$MANIFEST_TEMPLATE" ]; then
+    MANIFEST_TEMPLATE="manifest.json"
+fi
+
 echo "Generate manifest with the latest commit of repositories under the build directory"
 ./build-config/build-release-tools/HWIMO-BUILD build-config/build-release-tools/application/generate_manifest.py \
 --builddir b \
 --dest-manifest new_manifest \
 --force \
---jobs 8
+--jobs 8 \
+--template $MANIFEST_TEMPLATE
 
 echo "push the manifest of the tag ${tag_name} to bintray"
 arrNewTag=($(echo $tag_name | tr "/" "\n"))
-new_manifest=${arrNewTag[-1]}
+new_manifest="$MANIFEST_TEMPLATE"${arrNewTag[-1]}
 
 mv new_manifest $new_manifest
 ./build-config/build-release-tools/pushToBintray.sh \

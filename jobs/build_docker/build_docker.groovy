@@ -1,3 +1,11 @@
+import groovy.transform.Field;
+@Field run_script = "./build-config/jobs/build_docker/build_docker.sh"
+
+def setRunScript(run_script){
+    this.run_script = run_script
+}
+
+def runDockerBuild() {
 node(build_docker_node){
     withEnv([
         "MANIFEST_FILE_URL=${env.MANIFEST_FILE_URL}",
@@ -16,11 +24,11 @@ node(build_docker_node){
             usernamePassword(credentialsId: 'ff7ab8d2-e678-41ef-a46b-dd0e780030e1',
                              passwordVariable: 'SUDO_PASSWORD',
                              usernameVariable: 'SUDO_USER'),
-            usernameColonPassword(credentialsId: 'a94afe79-82f5-495a-877c-183567c51e0b', 
+            usernameColonPassword(credentialsId: 'a94afe79-82f5-495a-877c-183567c51e0b',
                                   variable: 'BINTRAY_CREDS')]){
             timeout(90){
                 withEnv(["WORKSPACE=${current_workspace}"]){
-                    sh './build-config/jobs/build_docker/build_docker.sh'
+                    sh this.run_script
                 }
             }
             archiveArtifacts 'rackhd_docker_images.tar, build_record'
@@ -33,3 +41,6 @@ node(build_docker_node){
         env.DOCKER_WORKSPACE="${current_workspace}"
     }
 }
+}
+
+return this

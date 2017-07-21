@@ -1,5 +1,10 @@
 #!/bin/bash
 set -ex
+
+if [  -z "$MANIFEST_TEMPLATE" ]; then
+    MANIFEST_TEMPLATE="manifest.json"
+fi
+
 pushd $WORKSPACE
 ./on-build-config/build-release-tools/HWIMO-BUILD on-build-config/build-release-tools/application/generate_manifest.py \
 --branch "$branch" \
@@ -7,11 +12,12 @@ pushd $WORKSPACE
 --timezone "$timezone" \
 --builddir b \
 --force \
---jobs 8
+--jobs 8 \
+--template "$MANIFEST_TEMPLATE"
 
 arrBranch=($(echo $branch | tr "/" "\n"))
 slicedBranch=${arrBranch[-1]}
-manifest_name=$(find -maxdepth 1 -name "$slicedBranch-[0-9]*" -printf "%f\n")
+manifest_name=$(find -maxdepth 1 -name "$MANIFEST_TEMPLATE-$slicedBranch-[0-9]*" -printf "%f\n")
 
 ./on-build-config/build-release-tools/pushToBintray.sh \
 --user $BINTRAY_USERNAME \
@@ -20,7 +26,7 @@ manifest_name=$(find -maxdepth 1 -name "$slicedBranch-[0-9]*" -printf "%f\n")
 --repo $BINTRAY_REPO \
 --package manifest \
 --version $manifest_name \
---file_path $branch-*
+--file_path $MANIFEST_TEMPLATE-$branch-*
 
 MANIFEST_FILE_URL=https://dl.bintray.com/$BINTRAY_SUBJECT/$BINTRAY_REPO/$manifest_name
 echo "MANIFEST_FILE_URL=<a href=\"$MANIFEST_FILE_URL\">$manifest_name</a>"

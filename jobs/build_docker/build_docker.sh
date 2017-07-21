@@ -83,8 +83,9 @@ popd
 
 
 #docker images build
+REPOS="on-imagebuilder on-core on-syslog on-dhcp-proxy on-tftp on-wss on-statsd on-tasks on-taskgraph on-http"
 pushd build-config/build-release-tools/
-./docker_build.sh $WORKSPACE/$CLONE_DIR $IS_OFFICIAL_RELEASE
+./docker_build.sh $WORKSPACE/$CLONE_DIR $IS_OFFICIAL_RELEASE "$REPOS"
 cp $WORKSPACE/$CLONE_DIR/build_record $WORKSPACE
 popd
 

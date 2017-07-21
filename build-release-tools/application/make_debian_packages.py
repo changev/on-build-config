@@ -142,7 +142,7 @@ def parse_args(args):
     parsed_args.is_official_release = common.str2bool(parsed_args.is_official_release)
     return parsed_args
 
-def update_rackhd_control(top_level_dir, is_official_release):
+def update_rackhd_control(top_level_dir, is_official_release, dependency_repos):
     """
     Update the rackhd/debian/control with the version of on-xxx.deb under $top_level_dir.
     :param top_level_dir: Top level directory that stores all the
@@ -151,7 +151,7 @@ def update_rackhd_control(top_level_dir, is_official_release):
     :return: None
     """
     updater = RackhdDebianControlUpdater(top_level_dir, is_official_release)
-    updater.update_RackHD_control()
+    updater.update_control(dependency_repos)
 
 def generate_version_file(repo_dir, is_official_release):
     """
@@ -221,7 +221,7 @@ def checkout_repos(manifest, builddir, force, jobs, git_credential=None):
         print "Failed to checkout repositories according to manifest file {0} \ndue to {1}. Exiting now...".format(manifest, e)
         sys.exit(1)
 
-def build_debian_packages(build_directory, jobs, is_official_release, sudo_creds, repos):
+def build_debian_packages(build_directory, jobs, is_official_release, sudo_creds, repos, dependency_repos):
     """
     Build debian packages
     """
@@ -229,18 +229,13 @@ def build_debian_packages(build_directory, jobs, is_official_release, sudo_creds
         for repo in repos:
             repo_dir = os.path.join(build_directory, repo)
             generate_version_file(repo_dir, is_official_release)
-
-        # Build Debian packages of repositories except RackHD
-        repos.remove("RackHD")
-        # Run HWIMO-BUILD script under each repository to build debian packages
         run_build_scripts(build_directory, repos, jobs=jobs, sudo_creds=sudo_creds)
-
-        # If on-xxx.deb build successfully, build Debian packages of RackHD
-        repos = ["RackHD"]
-        # Update the debian/control of rackhd to depends on specified version of component of raqkhd
-        update_rackhd_control(build_directory, is_official_release)
-        # Run HWIMO-BUILD script under each repository to build debian packages
-        run_build_scripts(build_directory, repos, sudo_creds=sudo_creds)
+        
+        if dependency_repos:
+            # Update the debian/control of repos to depends on specified version of component of raqkhd
+            update_rackhd_control(build_directory, is_official_release, dependency_repos)
+            # Run HWIMO-BUILD script under each repository to build debian packages
+            run_build_scripts(build_directory, dependency_repos, sudo_creds=sudo_creds)
 
     except Exception, e:
         print "Failed to build debian packages under {0} \ndue to {1}, Exiting now".format(build_directory, e)
@@ -329,6 +324,18 @@ def create_packages_filter(bintray, artifactory, artifactory_repo_name, build_di
 
     return package_not_exist
 
+def deb_dependency_filter(manifest_file, package_need_build_repos):
+    package_need_build_dependency_repos = []
+    with open(manifest_file) as m:
+        manifest = json.load(m)
+    for repo in manifest["repositories"]:
+        repo_name = common.strip_suffix(common.strip_prefix(repo["repository"], "https://github.com/RackHD/"), ".git")
+        if repo.has_key("dependency") and list(set(repo["dependency"]) & set(package_need_build_repos)):
+            if repo_name in package_need_build_repos:
+                package_need_build_repos.remove(repo_name)
+            package_need_build_dependency_repos.append(repo_name)
+    return package_need_build_repos, package_need_build_dependency_repos
+
 def main():
     """
     Build all the debians.
@@ -344,12 +351,14 @@ def main():
     all_repos = get_build_repos(args.build_directory)
     package_not_exist = create_packages_filter(bintray, artifactory, args.artifactory_repo, args.build_directory, args.is_official_release)
     package_need_build_repos = filter(package_not_exist, all_repos)
-    package_need_build_repos.append('RackHD') # always rebuild rackhd.deb whenever cache hit or not. because any of on-xxx.deb change will require rackhd.deb being rebuild
+    package_need_build_repos, package_need_build_dependency_repos = deb_dependency_filter(args.manifest_file, package_need_build_repos)
+
     for r in package_need_build_repos:
         print "[Info] Repo {0} will run deb-build ".format( r )
 
-    build_debian_packages(args.build_directory, args.jobs, args.is_official_release, args.sudo_credential, package_need_build_repos)
-    write_downstream_parameter_file(args.build_directory, args.manifest_file, args.is_official_release, args.parameter_file)
+    build_debian_packages(args.build_directory, args.jobs, args.is_official_release, args.sudo_credential, package_need_build_repos, package_need_build_dependency_repos)
+    if 'RackHD' in package_need_build_dependency_repos:
+        write_downstream_parameter_file(args.build_directory, args.manifest_file, args.is_official_release, args.parameter_file)
 
 if __name__ == '__main__':
     main()

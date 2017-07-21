@@ -38,9 +38,12 @@ node(build_debian_node){
                     env.RACKHD_COMMIT = "${props.RACKHD_COMMIT}"
                 }
             }
-             
-            archiveArtifacts 'b/**/*.deb, downstream_file'
-            stash name: 'debians', includes: 'b/**/*.deb'
+            env.NEW_DEB = false
+            if(fileExists ("b/**/*.deb")) {
+                archiveArtifacts 'b/**/*.deb, downstream_file'
+                stash name: 'debians', includes: 'b/**/*.deb'
+                env.NEW_DEB = true
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ String stash_manifest_name
 String stash_manifest_path
 String repo_dir
 @Field label_name = "unittest"
+@Field run_script = "jobs/UnitTest/unit_test.sh"
 @Field def test_repos = ["on-core", "on-tasks", "on-http", "on-taskgraph", "on-dhcp-proxy", "on-tftp", "on-syslog"]
 def setManifest(String manifest_name, String manifest_path){
     this.stash_manifest_name = manifest_name
@@ -23,6 +24,10 @@ def setLableName(label_name){
 
 def setTestRepos(test_repos){
     this.test_repos = test_repos
+}
+
+def setRunScript(run_script){
+    this.run_script = run_script
 }
 
 def unitTest(repo_name, used_resources){
@@ -45,7 +50,7 @@ def unitTest(repo_name, used_resources){
                                  passwordVariable: 'SUDO_PASSWORD',
                                  usernameVariable: 'SUDO_USER')
                          ]){
-                             sh "./build-config/jobs/UnitTest/unit_test.sh ${repo_name}"
+                             sh "./build-config/" + this.run_script + " " + repo_name
                          }
                     } finally{
                         // stash logs with the repo name which is the argument of the function ,for example: on-http
