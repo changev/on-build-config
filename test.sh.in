@@ -327,6 +327,8 @@ exportLog(){
     setupVirtualEnv
     waitForAPI
     nodesOn &
+    pushd ${WORKSPACE}/build-config
+    bash powerOffQemu.sh > ${WORKSPACE}/qemu_script.log
 
     # signal handler
     trap "deactivate && fetchOVALog" SIGINT SIGTERM SIGKILL EXIT

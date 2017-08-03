@@ -87,9 +87,21 @@ if [ -e "${REPO_NAME}/generate-sol-log.sh.in" ]; then
   rm sed.script
 else
   cat generate-sol-log.sh.in | sed -f sed.script > generate-sol-log.sh
-  chmod oug+x generate-sol-log.sh
+  chmod oug+x powerOffQemu.sh
   rm sed.script
 fi
+
+if [ -e "${REPO_NAME}/powerOffQemu.sh.in" ]; then
+  cat ${REPO_NAME}/powerOffQemu.sh.in | sed -f sed.script > powerOffQemu.sh
+  chmod oug+x generate-sol-log.sh
+  rm sed.script
+else
+  cat powerOffQemu.sh.in | sed -f sed.script > powerOffQemu.sh
+  chmod oug+x powerOffQemu.sh
+  rm sed.script
+fi
+
+
 echo "Generating vnc record script file from template"
 env | sed 's/[\%]/\\&/g;s/\([^=]*\)=\(.*\)/s%${\1}%\2%/' > sed.script
 if [ -e "${REPO_NAME}/.sh.in" ]; then
