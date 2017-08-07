@@ -329,7 +329,7 @@ def deb_dependency_filter(manifest_file, package_need_build_repos):
     with open(manifest_file) as m:
         manifest = json.load(m)
     for repo in manifest["repositories"]:
-        repo_name = common.strip_suffix(common.strip_prefix(repo["repository"], "https://github.com/RackHD/"), ".git")
+        repo_name = common.strip_suffix(common.strip_prefix(repo["repository"], "https://github.com/changev/"), ".git")
         if repo.has_key("dependency") and list(set(repo["dependency"]) & set(package_need_build_repos)):
             if repo_name in package_need_build_repos:
                 package_need_build_repos.remove(repo_name)
