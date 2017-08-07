@@ -6,12 +6,12 @@
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/RackHD/on-wss.git"
+            "repository": "https://github.com/changev/on-wss.git"
         },
         {
             "branch": "",
             "commit-id": "",
-            "repository": "https://github.com/RackHD/on-web-ui.git",
+            "repository": "https://github.com/changev/on-web-ui.git",
             "dependency": ["on-wss"]
         }
     ]
