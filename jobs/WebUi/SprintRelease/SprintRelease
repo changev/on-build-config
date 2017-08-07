@@ -11,7 +11,7 @@ node{
             "PUBLISH=${env.PUBLISH}",
             "MANIFEST_TEMPLATE=manifest-web-ui.json",
             "BINTRAY_SUBJECT=${env.BINTRAY_SUBJECT}",
-            "BINTRAY_REPO=binary"])
+            "BINTRAY_REPO=binary"
         ]){
             def message = "Job Name: ${env.JOB_NAME} \n" + "Build Full URL: ${env.BUILD_URL} \n" + "Phase: STARTED \n"
             echo "$message"
