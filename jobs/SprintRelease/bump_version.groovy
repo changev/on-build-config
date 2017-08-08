@@ -21,7 +21,7 @@ node{
             stage("Bump Version"){
                 withEnv(["MANIFEST_FILE_URL=${MANIFEST_FILE_URL}"]){
                     retry(retry_times){
-                        timeout(5){
+                        timeout(10){
                             sh '''#!/bin/bash -ex
                             # Checkout code according to manifest file
                             #curl --user $BINTRAY_USERNAME:$BINTRAY_API_KEY -L "$MANIFEST_FILE_URL" -o rackhd-manifest
