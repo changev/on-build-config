@@ -1,6 +1,6 @@
 package pipeline.fit
 
-def run(String rackhd_dir, Object fit_configurei, Map rackhd_host_cred=null){
+def run(String rackhd_dir, Object fit_configure, Map rackhd_host_cred=null){
     String group = fit_configure.getGroup()
     String stack = fit_configure.getStack()
     String log_level = fit_configure.getLogLevel()
@@ -16,7 +16,7 @@ def run(String rackhd_dir, Object fit_configurei, Map rackhd_host_cred=null){
         popd
         """
     }
-    
+
     try{
         sh """#!/bin/bash -ex
         pushd $rackhd_dir/test
