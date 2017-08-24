@@ -52,6 +52,7 @@ def runTest(String stack_type, String test_name, ArrayList<String> used_resource
                     virtual_node.remoteStartFetchLogs(target_dir, ova_dict, library_dir)
                     //----------------------------------
                     // run FIT test
+                    println fit_configure
                     fit.run(rackhd_dir, fit_configure)
                 // } catch(error){
                 //     keepEnv(library_dir, keep_env_on_failure, keep_minutes, test_target, test_name)
