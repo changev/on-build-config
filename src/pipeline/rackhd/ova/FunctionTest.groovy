@@ -53,9 +53,9 @@ def runTest(String stack_type, String test_name, ArrayList<String> used_resource
                     //----------------------------------
                     // run FIT test
                     fit.run(rackhd_dir, fit_configure)
-                } catch(error){
-                    keepEnv(library_dir, keep_env_on_failure, keep_minutes, test_target, test_name)
-                    error("[ERROR] Failed to run test $test_name against $test_target with error: $error")
+                // } catch(error){
+                //     keepEnv(library_dir, keep_env_on_failure, keep_minutes, test_target, test_name)
+                //     error("[ERROR] Failed to run test $test_name against $test_target with error: $error")
                 } finally{
                     // archive rackhd logs
                     rackhd_deployer.archiveLogsToTarget(library_dir, target_dir)
