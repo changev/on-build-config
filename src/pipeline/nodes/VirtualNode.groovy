@@ -83,7 +83,7 @@ def startFetchLogs(String library_dir, String target_dir){
         ]) {
             dir(target_dir){
                 sh """#!/bin/bash -ex
-                current_dir=`pwd`
+                current_dir=`pwd`"/"
                 pushd $library_dir/deployment
                 ./fetch_vnodes_log.sh start --LOG_DIR \$current_dir --BMC_ACCOUNT_LIST "$BMC_VNODE_USER:$BMC_VNODE_PASSWORD" --ON_BUILD_CONFIG_DIR $library_dir
                 popd
@@ -105,6 +105,60 @@ def stopFetchLogs(String library_dir, String target_dir){
             ./fetch_vnodes_log.sh stop --LOG_DIR \$current_dir
             popd
             """
+        }
+    } catch(error){
+        echo "[WARNING] Failed to stop fetching logs of virtual nodes with error: $error"
+    }
+}
+
+def remoteStartFetchLogs(String target_dir, Map remote_info, String library_dir=null){
+    try{
+       if(library_dir == null)
+       {
+         library_dir = "$WORKSPACE/on-build-config"
+         new pipeline.common.ShareMethod().checkoutOnBuildConfig(library_dir)
+       }
+        withCredentials([
+             usernamePassword(credentialsId: 'BMC_VNODE_CREDS',
+                             passwordVariable: 'BMC_VNODE_PASSWORD',
+                             usernameVariable: 'BMC_VNODE_USER')
+        ]) {
+              def remote_ip = remote_info["ip"]
+              def remote_user = remote_info["username"]
+              def remote_pass = remote_info["password"]
+              dir(target_dir){
+                sh """#!/bin/bash -ex
+                  current_dir=`pwd`
+                  pushd $library_dir/src/pipeline/nodes/ansible
+                    echo "ova-post-test ansible_host=$remote_ip ansible_user=$remote_user ansible_ssh_pass=$remote_pass ansible_become_pass=$remote_pass" > hosts
+                    ansible-playbook -i hosts main.yml --tags "start" --extra-vars "library_dir=$library_dir target_dir=\$current_dir BMC_CRED=$BMC_VNODE_USER:$BMC_VNODE_PASSWORD"
+                  popd
+                """
+              }
+        }
+    } catch(error){
+        echo "[WARNING] Failed to fetch logs of virtual nodes with error: $error"
+    }
+}
+
+def remoteStopFetchLogs(String target_dir, Map remote_info, String library_dir=null){
+    try{
+        if(library_dir == null)
+        {
+          library_dir = "$WORKSPACE/on-build-config"
+          new pipeline.common.ShareMethod().checkoutOnBuildConfig(library_dir)
+        }
+        def remote_ip = remote_info["ip"]
+        def remote_user = remote_info["username"]
+        def remote_pass = remote_info["password"]
+        dir(target_dir){
+          sh """#!/bin/bash -ex
+            current_dir=`pwd`"/"
+            pushd $library_dir/src/pipeline/nodes/ansible
+              echo "ova-post-test ansible_host=$remote_ip ansible_user=$remote_user ansible_ssh_pass=$remote_pass ansible_become_pass=$remote_pass" > hosts
+              ansible-playbook -i hosts main.yml --tags "stop" --extra-vars "target_dir=\$current_dir library_dir=$library_dir"
+            popd
+          """
         }
     } catch(error){
         echo "[WARNING] Failed to stop fetching logs of virtual nodes with error: $error"

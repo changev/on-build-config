@@ -23,7 +23,11 @@ vncRecordStart(){
     if [ ! -z $BUILD_ID ]; then
         export fname_prefix=${fname_prefix}_b${BUILD_ID}
     fi
-    bash vnc_record.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} $fname_prefix &
+    if [ ${NOHUP} == "true" ]; then
+      nohup bash vnc_record.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} $fname_prefix > ${LOG_DIR}/vnc_script.log &
+    else
+      bash vnc_record.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} $fname_prefix > ${LOG_DIR}/vnc_script.log &
+    fi
     popd
 }
 
@@ -35,7 +39,11 @@ vncRecordStop(){
 
 fetchSolLogStart(){
     pushd ${ON_BUILD_CONFIG_DIR}/deployment
-    bash generate_sol_log.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} > ${LOG_DIR}/sol_script.log &
+      if [ ${NOHUP} == "true" ]; then
+        nohup bash generate_sol_log.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} > ${LOG_DIR}/sol_script.log &
+      else
+        bash generate_sol_log.sh "${BMC_ACCOUNT_LIST}" ${LOG_DIR} > ${LOG_DIR}/sol_script.log &
+      fi
     popd
 }
 
@@ -74,6 +82,12 @@ parseArguments(){
                                             ;;
             -b | --ON_BUILD_CONFIG_DIR )    shift
                                             ON_BUILD_CONFIG_DIR=$1
+                                            ;;
+            -n | --NOHUP )                  shift
+                                            NOHUP=$1
+                                            ;;
+            -b | --BUILD_ID )               shift
+                                            BUILD_ID=$1
                                             ;;
             * )                             Usage
                                             exit 1
@@ -136,4 +150,3 @@ case "$1" in
     exit 1
   ;;
 esac
-

@@ -24,6 +24,7 @@ fi
 
 fname_prefix=$3
 
+pip install virtualenv --upgrade
 virtualenv --clear `pwd`/vnc
 source `pwd`/vnc/bin/activate
 #Install vnc2flv is not installed
