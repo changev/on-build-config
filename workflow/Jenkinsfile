@@ -1,0 +1,4 @@
+@Library('rackhd-devel-library') _
+node{
+    new pipeline.rackhd.ova.Build().execute()
+}
