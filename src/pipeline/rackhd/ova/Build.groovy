@@ -1,68 +1,78 @@
 package pipeline.rackhd.ova
 
-def execute(){
-  def shareMethod = new pipeline.common.ShareMethod()
-
-  def label_name = "packer_ova"
-  lock(label: label_name, quantity: 1){
-    node_name = shareMethod.occupyAvailableLockedResource(label_name, [])
-    node(node_name){
-      ws{
-          withEnv([
-              "RACKHD_COMMIT=${env.RACKHD_COMMIT}",
-              "RACKHD_VERSION=${env.RACKHD_VERSION}",
-              "IS_OFFICIAL_RELEASE=${env.IS_OFFICIAL_RELEASE}",
-              "OVA_CACHE_BUILD=${env.OVA_CACHE_BUILD}",
-              "OS_VER=${env.OS_VER}",
-              "BUILD_TYPE=vmware",
-              "ARTIFACTORY_URL=${env.ARTIFACTORY_URL}",
-              "STAGE_REPO_NAME=${env.STAGE_REPO_NAME}",
-              "DEB_COMPONENT=${env.DEB_COMPONENT}",
-              "DEB_DISTRIBUTION=trusty"]) {
-
-              deleteDir()
-
-              def libDir = "$WORKSPACE/on-build-config"
-              shareMethod.checkoutOnBuildConfig(libDir)
-
-              // clone packer scripts
-              def url = "https://github.com/RackHD/RackHD.git"
-              def branch = "${env.RACKHD_COMMIT}"
-              def rackhdDir = "build"
-              def cacheImageDir = "cache_image"
-              shareMethod.checkout(url, branch, rackhdDir)
-
-              // Test jenkins server doesn't use OVA cache build
-              if ("$OVA_CACHE_BUILD" == "true"){
-                  shareMethod.copyArtifact("$OVA_CACHE_BUILD", cacheImageDir)
-              }
-
-              timeout(180){
-                  sh """#!/bin/bash
-                  set -x
-                  ./on-build-config/src/pipeline/rackhd/ova/build.sh \
-                  --WORKSPACE $WORKSPACE \
-                  --CACHE_IMAGE_DIR $cacheImageDir \
-                  --RACKHD_DIR $rackhdDir \
-                  --ON_BUILD_CONFIG_DIR $libDir \
-                  --IS_OFFICIAL_RELEASE $IS_OFFICIAL_RELEASE \
-                  --BUILD_TYPE $BUILD_TYPE \
-                  --RACKHD_VERSION $RACKHD_VERSION \
-                  --OS_VER $OS_VER \
-                  --ARTIFACTORY_URL $ARTIFACTORY_URL \
-                  --STAGE_REPO_NAME $STAGE_REPO_NAME \
-                  --DEB_DISTRIBUTION $DEB_DISTRIBUTION \
-                  --DEB_COMPONENT $DEB_COMPONENT
-                  """
-              }
-              sh """cd $rackhdDir/packer && touch a.ova"""
-              stash name: 'ova', includes: """$rackhdDir/packer/*.ova"""
-              archiveArtifacts """$rackhdDir/packer/*.ova, $rackhdDir/packer/*.log, $rackhdDir/packer/*.md5, $rackhdDir/packer/*.sha"""
-
-              env.OVA_STASH_NAME="ova"
-              env.OVA_PATH="$rackhdDir/packer/*.ova"
-          }
-      }
+def buildOVAFromVMX(String ansible_playbook, String os_ver, String rackhd_version,String rackhd_dir, String rackhd_apt_repo, String target_dir, String cache_image_dir){
+    timeout(90){
+        sh """#!/bin/bash -ex
+        pushd $rackhd_dir/packer
+          ./build_ova.sh  --RACKHD_DIR $rackhd_dir \
+                          --OS_VER $os_ver \
+                          --RACKHD_VERSION $rackhd_version \
+                          --DEBIAN_REPOSITORY "$rackhd_apt_repo" \
+                          --CACHE_IMAGE_DIR $cache_image_dir/RackHD/packer/output-vmware-iso \
+                          --TARGET_DIR $target_dir \
+                          --ANSIBLE_PLAYBOOK $ansible_playbook \
+                          --BUILD_STAGE "BUILD_FINAL"
+        popd
+        """
     }
-  }
+}
+
+def buildOVAFromISO(String ansible_playbook, String os_ver, String rackhd_version,String rackhd_dir, String rackhd_apt_repo, String target_dir){
+    timeout(90){
+        sh """#!/bin/bash -ex
+        pushd $rackhd_dir/packer
+          ./build_ova.sh  --RACKHD_DIR $rackhd_dir \
+                          --OS_VER $os_ver \
+                          --RACKHD_VERSION $rackhd_version \
+                          --DEBIAN_REPOSITORY "$rackhd_apt_repo" \
+                          --TARGET_DIR $target_dir \
+                          --ANSIBLE_PLAYBOOK $ansible_playbook \
+                          --BUILD_STAGE "BUILD_ALL"
+        popd
+        """
+    }
+}
+
+def buildOVA(String rackhd_repo_url, String rackhd_commit, String rackhd_version, String rackhd_apt_repo, String os_ver, String cache_job_name=""){
+    String label_name = "packer_ova"
+    def share_method = new pipeline.common.ShareMethod()
+    lock(label:label_name,quantity:1){
+        String node_name = share_method.occupyAvailableLockedResource(label_name, [])
+        node(node_name){
+            deleteDir()
+            String rackhd_dir = "$WORKSPACE/RackHD"
+            String target_dir = "$WORKSPACE/ova" //A dir stores all the output of build process
+
+            // Checkout RackHD
+            share_method.checkout(rackhd_repo_url, rackhd_commit, rackhd_dir)
+
+            // Choose ansible playbook, cause the apt source has been replaced so both playbook is ok here.
+            String ansible_playbook = "rackhd_package_mini"
+
+            if(cache_job_name == ""){
+                buildOVAFromISO(ansible_playbook, os_ver, rackhd_version, rackhd_dir, rackhd_apt_repo, target_dir)
+            }
+            else{
+                String cache_image_dir = "$WORKSPACE/cache_image"
+                // Copy ovf from the artifact of project VAGRANT_CACHE_BUILD
+                share_method.copyArtifact(cache_job_name, cache_image_dir)
+                buildOVAFromVMX(ansible_playbook, os_ver, rackhd_version, rackhd_dir, rackhd_apt_repo, target_dir, cache_image_dir)
+            }
+
+            // After build step, target_dir has been full of ova outputs
+            dir(target_dir){
+                ova_name = sh( returnStdout: true, script: 'find -name *.ova  -printf %f' ).trim()
+                stash name: "ova", includes: "$ova_name"
+            }
+            // Differ from stash, in order to classify artifacts, the outputs should be archived with dir path
+            relative_path = target_dir.replaceAll("$WORKSPACE/", "")
+            archiveArtifacts """$relative_path/*.ova, $relative_path/*.log, $relative_path/*.md5, $relative_path/*.sha"""
+
+            // Construst ova_dict for possible next steps
+            def ova_dict = [:]
+            ova_dict["stash_name"] = "ova"
+            ova_dict["stash_path"] = "$ova_name"
+            return ova_dict
+        }
+    }
 }

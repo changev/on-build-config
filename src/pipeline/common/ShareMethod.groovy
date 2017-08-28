@@ -123,5 +123,8 @@ def unstashFile(Map stash_dict, String target_dir){
     return file_path
 }
 
-
-
+def copyArtifact(String jobName, String targetDir){
+    step ([$class: 'CopyArtifact',
+    projectName: jobName,
+    target: targetDir])
+}
