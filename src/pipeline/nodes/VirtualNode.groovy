@@ -111,7 +111,7 @@ def stopFetchLogs(String library_dir, String target_dir){
     }
 }
 
-def remoteStartFetchLogs(String target_dir, Map remote_info, String library_dir=null){
+def remoteStartFetchLogs(String target_dir, String ova_creds, String ova_internal_ip_creds, String library_dir=null){
     try{
        if(library_dir == null)
        {
@@ -121,16 +121,17 @@ def remoteStartFetchLogs(String target_dir, Map remote_info, String library_dir=
         withCredentials([
              usernamePassword(credentialsId: 'BMC_VNODE_CREDS',
                              passwordVariable: 'BMC_VNODE_PASSWORD',
-                             usernameVariable: 'BMC_VNODE_USER')
+                             usernameVariable: 'BMC_VNODE_USER'),
+             usernamePassword(credentialsId: ova_creds,
+                             passwordVariable: 'OVA_PASSWORD',
+                             usernameVariable: 'OVA_USER'),
+             string(credentialsId: ova_internal_ip_creds, variable: 'OVA_INTERNAL_IP')
         ]) {
-              def remote_ip = remote_info["ip"]
-              def remote_user = remote_info["username"]
-              def remote_pass = remote_info["password"]
               dir(target_dir){
                 sh """#!/bin/bash -ex
                   current_dir=`pwd`
                   pushd $library_dir/src/pipeline/nodes/ansible
-                    echo "ova-post-test ansible_host=$remote_ip ansible_user=$remote_user ansible_ssh_pass=$remote_pass ansible_become_pass=$remote_pass" > hosts
+                    echo "ova-post-test ansible_host=$OVA_INTERNAL_IP ansible_user=$OVA_USER ansible_ssh_pass=$OVA_PASSWORD ansible_become_pass=$OVA_PASSWORD" > hosts
                     ansible-playbook -i hosts main.yml --tags "start" --extra-vars "library_dir=$library_dir target_dir=\$current_dir BMC_CRED=$BMC_VNODE_USER:$BMC_VNODE_PASSWORD"
                   popd
                 """
@@ -141,21 +142,24 @@ def remoteStartFetchLogs(String target_dir, Map remote_info, String library_dir=
     }
 }
 
-def remoteStopFetchLogs(String target_dir, Map remote_info, String library_dir=null){
+def remoteStopFetchLogs(String target_dir, String ova_creds, String ova_internal_ip_creds, String library_dir=null){
     try{
         if(library_dir == null)
         {
           library_dir = "$WORKSPACE/on-build-config"
           new pipeline.common.ShareMethod().checkoutOnBuildConfig(library_dir)
         }
-        def remote_ip = remote_info["ip"]
-        def remote_user = remote_info["username"]
-        def remote_pass = remote_info["password"]
+        withCredentials([
+          usernamePassword(credentialsId: ova_creds,
+                          passwordVariable: 'OVA_PASSWORD',
+                          usernameVariable: 'OVA_USER'),
+          string(credentialsId: ova_internal_ip_creds, variable: 'OVA_INTERNAL_IP')
+          ])
         dir(target_dir){
           sh """#!/bin/bash -ex
             current_dir=`pwd`"/"
             pushd $library_dir/src/pipeline/nodes/ansible
-              echo "ova-post-test ansible_host=$remote_ip ansible_user=$remote_user ansible_ssh_pass=$remote_pass ansible_become_pass=$remote_pass" > hosts
+              echo "ova-post-test ansible_host=$OVA_INTERNAL_IP ansible_user=$OVA_USER ansible_ssh_pass=$OVA_PASSWORD ansible_become_pass=$OVA_PASSWORD" > hosts
               ansible-playbook -i hosts main.yml --tags "stop" --extra-vars "target_dir=\$current_dir library_dir=$library_dir"
             popd
           """
