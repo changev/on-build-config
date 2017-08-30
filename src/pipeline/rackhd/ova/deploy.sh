@@ -223,31 +223,15 @@ configRackHDOvaVm(){
     popd
 }
 
-portForwarding(){
-    # forward ova to localhost
-    # according to vagrant/mongo/config.json and cit/fit config
-    socat TCP4-LISTEN:9091,forever,reuseaddr,fork TCP4:$1:5672 &
-    socat TCP4-LISTEN:9090,forever,reuseaddr,fork TCP4:$1:8080 &
-    socat TCP4-LISTEN:9092,forever,reuseaddr,fork TCP4:$1:9080 &
-    socat TCP4-LISTEN:9093,forever,reuseaddr,fork TCP4:$1:8443 &
-    ssh-keygen -f "$HOME/.ssh/known_hosts" -R [localhost]:2222
-    socat TCP4-LISTEN:2222,forever,reuseaddr,fork TCP4:$1:22 &
-    socat TCP4-LISTEN:37017,forever,reuseaddr,fork TCP4:$1:27017 &
-    echo "Finished ova -> localhost port forwarding"
-    echo "5672->9091"
-    echo "8080->9090"
-    echo "9080->9092"
-    echo "8443->9093"
-    echo "22->2222"
-    echo "27017->37017"
-}
-
 ##############################################
 #
 # deploy RackHD
 #
 #############################################
 deployRackHD(){
+    # Clean ssh cache
+    ssh-keygen -f "$HOME/.ssh/known_hosts" -R [$OVA_INTERNAL_IP]:22
+
     # Deploy rackhd ova and  run it
     deployOva
 
@@ -256,9 +240,6 @@ deployRackHD(){
 
     #Config ova vm for function test
     configRackHDOvaVm
-
-    #Port forward for FIT to connect rackhd ova
-    portForwarding $OVA_INTERNAL_IP
 }
 
 ##############################################

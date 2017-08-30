@@ -77,7 +77,7 @@
           flat: yes
       with_items:
         - "{{ target_dir }}/sol_script.log"
-        - "{{ target_dir }}/vnc_record.log"
+        - "{{ target_dir }}/vnc_script.log"
         - "{{ flvfiles.stdout_lines }}"
         - "{{ sol_logs.stdout_lines }}"
       ignore_errors: yes
