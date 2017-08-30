@@ -154,15 +154,16 @@ def remoteStopFetchLogs(String target_dir, String ova_creds, String ova_internal
                           passwordVariable: 'OVA_PASSWORD',
                           usernameVariable: 'OVA_USER'),
           string(credentialsId: ova_internal_ip_creds, variable: 'OVA_INTERNAL_IP')
-          ])
-        dir(target_dir){
-          sh """#!/bin/bash -ex
-            current_dir=`pwd`"/"
-            pushd $library_dir/src/pipeline/nodes/ansible
-              echo "ova-post-test ansible_host=$OVA_INTERNAL_IP ansible_user=$OVA_USER ansible_ssh_pass=$OVA_PASSWORD ansible_become_pass=$OVA_PASSWORD" > hosts
-              ansible-playbook -i hosts main.yml --tags "stop" --extra-vars "target_dir=\$current_dir library_dir=$library_dir"
-            popd
-          """
+        ]) {
+            dir(target_dir){
+              sh """#!/bin/bash -ex
+                current_dir=`pwd`"/"
+                pushd $library_dir/src/pipeline/nodes/ansible
+                  echo "ova-post-test ansible_host=$OVA_INTERNAL_IP ansible_user=$OVA_USER ansible_ssh_pass=$OVA_PASSWORD ansible_become_pass=$OVA_PASSWORD" > hosts
+                  ansible-playbook -i hosts main.yml --tags "stop" --extra-vars "target_dir=\$current_dir library_dir=$library_dir"
+                popd
+              """
+            }
         }
     } catch(error){
         echo "[WARNING] Failed to stop fetching logs of virtual nodes with error: $error"
