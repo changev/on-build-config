@@ -1,0 +1,27 @@
+Library("ova-function-test") _
+node(){
+        withEnv([
+        "OVA_NET_INTERFACE=${env.OVA_NET_INTERFACE}",
+        "DNS_SERVER_IP=${env.DNS_SERVER_IP}",
+        "OVA_GATEWAY=${env.OVA_GATEWAY}",
+        ])
+    {
+    print env.OVA_NET_INTERFACE
+    def ova_post_test = new pipeline.rackhd.ova.FunctionTest()
+    println ova_post_test
+    ova_post_test.runTest("virtual_stack",
+    "FIT",
+    [],
+    'ff7ab8d2-e678-41ef-a46b-dd0e780030e1',
+    "ESXI_CREDS",
+    'OVA_CREDS',
+    env.OVA_GATEWAY,
+    "Deployed_OVA_INTERNAL_IP",
+    null,
+    "http://10.62.59.175:8080/job/alan/job/ova-source/lastSuccessfulBuild/artifact/rackhd-ubuntu-14.04-2.18.0-20170822UTC.ova",
+    env.OVA_NET_INTERFACE,
+    env.DNS_SERVER_IP)
+    }
+
+}
+
