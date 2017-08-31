@@ -1,4 +1,4 @@
-Library("ova-function-test") _
+@Library("ova-function-test") _
 node(){
         withEnv([
         "OVA_NET_INTERFACE=${env.OVA_NET_INTERFACE}",
