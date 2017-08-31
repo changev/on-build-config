@@ -6,7 +6,7 @@
 --sentry $SENTRY \
 --job-name $JOB_NAME \
 --jenkins-url $JENKINS_URL \
---force $MANUAL 
+--force $MANUAL
 
 if [ $? -eq 1 ]; then
     echo "There are manually triggered MergeFreezer, exit."
@@ -17,7 +17,6 @@ fi
 run(){
     ./build-release-tools/HWIMO-BUILD ./build-release-tools/application/merge_freeze.py \
     --admin-ghtoken "$GITHUB_TOKEN" \
-    --puller-ghtoken-pool "$PULLER_GITHUB_TOKEN_POOL" \
     --manifest-file ./build-release-tools/lib/manifest-pr-gate.json \
     --freeze-context "$FREEZE_CONTEXT" \
     --freeze-desc "$FREEZE_DESC" \
