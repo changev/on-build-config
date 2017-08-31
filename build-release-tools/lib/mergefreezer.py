@@ -7,26 +7,28 @@ class MergeFreezer(object):
     Freeze means a "success" or "failure" commit status will be add to PR
     parameters freeze_* is for customing this commit status
     """
-    def __init__(self, admin_ghtoken, puller_ghtoken_pool ,repo_list, freeze_context, freeze_desc, unfreeze_desc):
+    def __init__(self, admin_ghtoken, repo_list, freeze_context, freeze_desc, unfreeze_desc, puller_ghtoken_pool=None):
         self.__admin_ghtoken = admin_ghtoken
-        self.__puller_ghtoken_pool = puller_ghtoken_pool
-        self.__puller_ghtoken_pool = puller_ghtoken_pool.split()
+        self.__puller_ghtoken_pool = puller_ghtoken_pool.split() if puller_ghtoken_pool else []
         self.__repo_list = repo_list
         self.__freeze_context = freeze_context
         self.__freeze_desc = freeze_desc
         self.__unfreeze_desc = unfreeze_desc
         # a pygithub private class method
         self.__admin_requester = Requester.Requester(self.__admin_ghtoken,None,"https://api.github.com", 10, None, None,'PyGithub/Python',30,False)
-    
+
     @property
     def __gh(self):
         """
         return a Github instance with random token
         """
-        ghtoken_pool_size = len(self.__puller_ghtoken_pool)
-        random_index = random.randint(0, ghtoken_pool_size-1)
-        this_choice = self.__puller_ghtoken_pool[random_index]
-        return Github(this_choice)
+        if self.__puller_ghtoken_pool:
+            ghtoken_pool_size = len(self.__puller_ghtoken_pool)
+            random_index = random.randint(0, ghtoken_pool_size-1)
+            this_choice = self.__puller_ghtoken_pool[random_index]
+            return Github(this_choice)
+        else:
+            return Github()
 
     def get_repo_open_prs(self, repo):
         return self.__gh.get_repo(repo).get_pulls(state="open")

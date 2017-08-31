@@ -18,7 +18,7 @@ from manifest import Manifest
 
 class PrParser(object):
 
-    def __init__(self, change_url, target_branch, puller_ghtoken_pool):
+    def __init__(self, change_url, target_branch, puller_ghtoken_pool=None):
         """
         Initialize PrParser with change_url
         """
@@ -32,7 +32,7 @@ class PrParser(object):
         self.__merge_commit_sha = "origin/pr/{0}/merge".format(self.__pr_number)
         self.__pr_list = [self.__repo]
         self.__pr_connectivity_map = collections.defaultdict(dict)
-        self.__puller_ghtoken_pool = puller_ghtoken_pool.split()
+        self.__puller_ghtoken_pool = puller_ghtoken_pool.split() if puller_ghtoken_pool else []
         # If the prs of this build is valid,
         # -1 haven't parse pr, 1 is valid, 0 invalid
         # unmergeable pr will set this var to 1
@@ -43,10 +43,13 @@ class PrParser(object):
         """
         return a Github instance with random token
         """
-        ghtoken_pool_size = len(self.__puller_ghtoken_pool)
-        random_index = random.randint(0, ghtoken_pool_size-1)
-        this_choice = self.__puller_ghtoken_pool[random_index]
-        return Github(this_choice)
+        if self.__puller_ghtoken_pool:
+            ghtoken_pool_size = len(self.__puller_ghtoken_pool)
+            random_index = random.randint(0, ghtoken_pool_size-1)
+            this_choice = self.__puller_ghtoken_pool[random_index]
+            return Github(this_choice)
+        else:
+            return Github()
 
     def pr_group_is_valid(self):
         if self.__valid_pr_group == 1:
@@ -301,7 +304,7 @@ def parse_args(args):
                         action="store")
     parser.add_argument("--puller-ghtoken-pool",
                         help="Github token pool that have basic pull permission.",
-                        required=True,
+                        required=False,
                         action="store")
     parser.add_argument("--manifest-file-path",
                         help="The file path of wanted manifest output, relevent or absolute",

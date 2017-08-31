@@ -12,7 +12,7 @@ def parse_args(args):
                         action="store")
     parser.add_argument("--puller-ghtoken-pool",
                         help="Github token pool that have basic pull permission.",
-                        required=True,
+                        required=False,
                         action="store")
     parser.add_argument("--manifest-file",
                         help="The file path of manifest which is the repo information source",
@@ -50,11 +50,11 @@ def main():
         repo_list.append(repo_name)
 
     mf = MergeFreezer(parsed_args.admin_ghtoken, \
-                      parsed_args.puller_ghtoken_pool, \
                       repo_list, \
                       parsed_args.freeze_context, \
                       parsed_args.freeze_desc, \
-                      parsed_args.unfreeze_desc)
+                      parsed_args.unfreeze_desc, \
+                      parsed_args.puller_ghtoken_pool)
 
     if parsed_args.freeze.lower() == "true":
         mf.freeze_all_prs()
