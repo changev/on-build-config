@@ -23,7 +23,6 @@ class PrParser(object):
         Initialize PrParser with change_url
         """
         assert change_url, "Error: PR URL is None!"
-        assert puller_ghtoken_pool, "Error: puller_ghtoken_pool is None!"
         assert target_branch, "Error: target_branch is None!"
         url_segments = change_url.split("/")
         self.__repo = "/".join(change_url.split("/")[-4:-2]).lower()
