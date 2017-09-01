@@ -10,7 +10,7 @@ node(){
     def ova_post_test = new pipeline.rackhd.ova.FunctionTest()
     println ova_post_test
     ova_post_test.runTest("virtual_stack",
-    "FIT",
+    "OS_INSTALL
     [],
     'ff7ab8d2-e678-41ef-a46b-dd0e780030e1',
     "ESXI_CREDS",
@@ -24,4 +24,3 @@ node(){
     }
 
 }
-
